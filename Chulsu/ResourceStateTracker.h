@@ -4,6 +4,8 @@
 class ResourceStateTracker
 {
 public:
+	ResourceStateTracker() {}
+	~ResourceStateTracker();
 	void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList4> CmdList, ID3D12Resource* resource, D3D12_RESOURCE_STATES state);
 
 	void AddTrackingResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) { mResourceStateMap[resource] = state; }
