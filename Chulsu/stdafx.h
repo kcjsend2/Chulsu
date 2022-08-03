@@ -44,6 +44,8 @@
 #include <conio.h>
 #include <io.h>
 #include <codecvt>
+#include <filesystem>
+#include <span>
 
 #include "dxcapi.h" 
 #include <d3dcompiler.h> 
