@@ -2,10 +2,6 @@
 
 DX12Renderer::~DX12Renderer()
 {
-}
-
-void DX12Renderer::Release()
-{
     if (mD3dDevice) WaitUntilGPUComplete();
     if (mFenceEvent) CloseHandle(mFenceEvent);
     mMemAllocator->Release();

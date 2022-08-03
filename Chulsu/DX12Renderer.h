@@ -9,7 +9,6 @@ public:
 	~DX12Renderer();
 
 	virtual void Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight) override;
-	virtual void Release();
 	virtual void Draw() override;
 
 private:

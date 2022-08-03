@@ -34,7 +34,6 @@ void Framework::Run()
 
     MsgLoop();
 
-    mRenderer->Release();
     DestroyWindow(mWinHandle);
 }
 
