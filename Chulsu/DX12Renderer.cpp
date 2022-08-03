@@ -17,7 +17,7 @@ DX12Renderer::~DX12Renderer()
 ComPtr<IDXGISwapChain3> DX12Renderer::CreateDxgiSwapChain(ComPtr<IDXGIFactory4> pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ComPtr<ID3D12CommandQueue> pCommandQueue)
 {
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = mDefaultSwapChainBufferCount;
+    swapChainDesc.BufferCount = mSwapChainBufferCount;
     swapChainDesc.Width = width;
     swapChainDesc.Height = height;
     swapChainDesc.Format = format;
@@ -143,15 +143,15 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mRtvHeap.pHeap = CreateDescriptorHeap(mD3dDevice, mRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
 
     // Create the per-frame objects
-    for (uint32_t i = 0; i < mDefaultSwapChainBufferCount; i++)
+    for (uint32_t i = 0; i < mSwapChainBufferCount; i++)
     {
-        mD3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCmdAllocator));
+        mD3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCmdAllocator[i]));
         mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrameObjects[i].pSwapChainBuffer));
         mFrameObjects[i].rtvHandle = CreateRTV(mD3dDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
     }
 
     // Create the command-list
-    mD3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCmdAllocator.Get(), nullptr, IID_PPV_ARGS(&mD3dCmdList));
+    mD3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCmdAllocator[0].Get(), nullptr, IID_PPV_ARGS(&mD3dCmdList));
 
     // Create a fence and the event
     mD3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));

@@ -20,20 +20,19 @@ private:
 	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(ComPtr<ID3D12Device5> pDevice, uint32_t count, D3D12_DESCRIPTOR_HEAP_TYPE type, bool shaderVisible);
 	D3D12_CPU_DESCRIPTOR_HANDLE CreateRTV(ComPtr<ID3D12Device5> pDevice, ComPtr<ID3D12Resource> pResource, ComPtr<ID3D12DescriptorHeap> pHeap, uint32_t& usedHeapEntries, DXGI_FORMAT format);
 
+	UINT mCurrBackBufferIndex = 0;
+	const UINT mRtvHeapSize = 2;
+	static const UINT mSwapChainBufferCount = 2;
+
 	ComPtr<ID3D12Device5> mD3dDevice;
 	ComPtr<ID3D12GraphicsCommandList4> mD3dCmdList;
 	ComPtr<ID3D12CommandQueue> mCommandQueue;
-	ComPtr<ID3D12CommandAllocator> mCmdAllocator;
+	ComPtr<ID3D12CommandAllocator> mCmdAllocator[mSwapChainBufferCount];
 	ComPtr<IDXGIFactory4> mDxgiFactory;
 	ComPtr<IDXGISwapChain3> mSwapChain;
 
-	const int mDefaultSwapChainBufferCount = 2;
-	UINT mCurrBackBufferIndex = 0;
 
 	D3D12MA::Allocator* mMemAllocator = NULL;
-
-	const UINT mRtvHeapSize = 2;
-	static const UINT mSwapChainBufferCount = 2;
 
 	ComPtr<ID3D12Fence> mFence;
 	UINT64 mFenceValues[mSwapChainBufferCount] = {0, 0};
