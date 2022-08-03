@@ -18,7 +18,7 @@ public:
 	Mesh() {}
 	virtual ~Mesh() {}
 
-	void CreateResourceInfo(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+	void CreateResourceInfo(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker tracker, UINT vbStride, UINT ibStride, D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
 
 private:
@@ -27,8 +27,8 @@ private:
 	int mRoughnessTextureIndex = NULL;
 	int mNormalMapTextureIndex = NULL;
 
-	shared_ptr<D3D12MA::Allocation> mVertexBufferAlloc;
-	shared_ptr<D3D12MA::Allocation> mIndexBufferAlloc;
+	ComPtr<D3D12MA::Allocation> mVertexBufferAlloc;
+	ComPtr<D3D12MA::Allocation> mIndexBufferAlloc;
 
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {};
 	D3D12_INDEX_BUFFER_VIEW mIndexBufferView = {};
@@ -42,6 +42,6 @@ private:
 	UINT mVertexStride = 0;
 	UINT mIndexCount = 0;
 
-	shared_ptr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+	ComPtr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const void* initData, UINT64 byteSize, D3D12MA::Allocation* uploadBuffer, D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 };

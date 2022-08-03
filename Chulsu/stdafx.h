@@ -25,6 +25,7 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
 
 #include <array>
 #include <vector>
@@ -48,7 +49,7 @@
 #include <span>
 
 #include "dxcapi.h" 
-#include <d3dcompiler.h> 
+#include <d3dcompiler.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

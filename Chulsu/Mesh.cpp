@@ -1,8 +1,8 @@
 #include "Mesh.h"
 
-shared_ptr<D3D12MA::Allocation> Mesh::CreateBufferResource(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList* cmdList,
+ComPtr<D3D12MA::Allocation> Mesh::CreateBufferResource(
+	ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* allocator,
 	ResourceStateTracker& tracker,
 	const void* initData, UINT64 byteSize,
@@ -12,11 +12,13 @@ shared_ptr<D3D12MA::Allocation> Mesh::CreateBufferResource(
 	D3D12MA::ALLOCATION_DESC allocationDesc = {};
 	allocationDesc.HeapType = heapType;
 
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+		byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+
 	D3D12MA::Allocation* defaultAllocation;
 	allocator->CreateResource(
 		&allocationDesc,
-		&CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-			byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE),
+		&resourceDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		NULL,
 		&defaultAllocation,
@@ -25,8 +27,7 @@ shared_ptr<D3D12MA::Allocation> Mesh::CreateBufferResource(
 	allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
 	allocator->CreateResource(
 		&allocationDesc,
-		&CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-			byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE),
+		&resourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		NULL,
 		&uploadBuffer,
@@ -44,13 +45,13 @@ shared_ptr<D3D12MA::Allocation> Mesh::CreateBufferResource(
 
 	tracker.TransitionBarrier(cmdList, defaultAllocation->GetResource(), D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
-	shared_ptr<D3D12MA::Allocation> raiiAllocation = make_shared<D3D12MA::Allocation>(move(defaultAllocation));
+	ComPtr<D3D12MA::Allocation> raiiAllocation(defaultAllocation);
 	return raiiAllocation;
 }
 
 void Mesh::CreateResourceInfo(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList* cmdList,
+	ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* allocator,
 	ResourceStateTracker tracker,
 	UINT vbStride, UINT ibStride,
@@ -62,7 +63,7 @@ void Mesh::CreateResourceInfo(
 
 	const UINT vbByteSize = vbCount * vbStride;
 
-	D3D12MA::Allocation* vertexUploadAlloc;
+	D3D12MA::Allocation* vertexUploadAlloc = nullptr;
 	mVertexBufferAlloc = CreateBufferResource(device, cmdList, allocator, tracker,
 		vbData, vbByteSize, vertexUploadAlloc);
 
@@ -80,7 +81,7 @@ void Mesh::CreateResourceInfo(
 
 		const UINT ibByteSize = ibCount * ibStride;
 
-		D3D12MA::Allocation* indexUploadAlloc;
+		D3D12MA::Allocation* indexUploadAlloc = nullptr;
 		mIndexBufferAlloc = CreateBufferResource(device, cmdList, allocator, tracker,
 			ibData, ibByteSize, indexUploadAlloc);
 
