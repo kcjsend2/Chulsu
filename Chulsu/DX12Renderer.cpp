@@ -132,6 +132,7 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
         pDebug5->SetEnableAutoName(true);
     }
 #endif
+
     // Create the DXGI factory
     ComPtr<IDXGIFactory4> pDxgiFactory;
     CreateDXGIFactory1(IID_PPV_ARGS(&pDxgiFactory));
