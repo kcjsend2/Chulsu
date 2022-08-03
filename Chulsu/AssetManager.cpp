@@ -1,6 +1,7 @@
 #include "AssetManager.h"
 
-void AssetManager::LoadModel(const std::string& path)
+void AssetManager::LoadModel(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+	D3D12MA::Allocator* allocator, ResourceStateTracker tracker, const std::string& path)
 {
 	std::vector<shared_ptr<Mesh>> Meshes;
 
@@ -29,22 +30,18 @@ void AssetManager::LoadModel(const std::string& path)
 		// Assimp object
 		const aiMesh* pAiMesh = pAiScene->mMeshes[m];
 
-		// Parse vertex data
 		std::vector<Vertex> Vertices;
 		Vertices.reserve(pAiMesh->mNumVertices);
 		for (unsigned int v = 0; v < pAiMesh->mNumVertices; ++v)
 		{
 			Vertex& vertex = Vertices.emplace_back();
-			// Position
 			vertex.position = { pAiMesh->mVertices[v].x, pAiMesh->mVertices[v].y, pAiMesh->mVertices[v].z };
 
-			// Texture coords
 			if (pAiMesh->HasTextureCoords(0))
 			{
 				vertex.texCoord = { pAiMesh->mTextureCoords[0][v].x, pAiMesh->mTextureCoords[0][v].y };
 			}
 
-			// Normal
 			if (pAiMesh->HasNormals())
 			{
 				vertex.normal = { pAiMesh->mNormals[v].x, pAiMesh->mNormals[v].y, pAiMesh->mNormals[v].z };
@@ -57,7 +54,6 @@ void AssetManager::LoadModel(const std::string& path)
 			}
 		}
 
-		// Parse index data
 		std::vector<uint32_t> Indices;
 		Indices.reserve(static_cast<size_t>(pAiMesh->mNumFaces) * 3);
 		std::span Faces = { pAiMesh->mFaces, pAiMesh->mNumFaces };
@@ -67,5 +63,9 @@ void AssetManager::LoadModel(const std::string& path)
 			Indices.push_back(Face.mIndices[1]);
 			Indices.push_back(Face.mIndices[2]);
 		}
+
+		auto mesh = make_shared<Mesh>();
+		mesh->CreateResourceInfo(device, cmdList, allocator, tracker, sizeof(Vertex), sizeof(UINT),
+			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
 	}
 }
