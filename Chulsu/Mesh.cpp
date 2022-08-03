@@ -49,7 +49,7 @@ ComPtr<D3D12MA::Allocation> Mesh::CreateBufferResource(
 	return raiiAllocation;
 }
 
-void Mesh::CreateResourceInfo(
+void Mesh::InitializeMeshBuffers(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* allocator,
