@@ -67,5 +67,8 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		auto mesh = make_shared<Mesh>();
 		mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
+		Meshes.push_back(mesh);
 	}
+
+	mCachedMeshes[path] = Meshes;
 }
