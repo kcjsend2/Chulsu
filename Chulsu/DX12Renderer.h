@@ -38,7 +38,7 @@ private:
 	UINT64 mFenceValues[mSwapChainBufferCount] = {0, 0};
 	HANDLE mFenceEvent = NULL;
 
-	//ResourceStateTracker mResourceTracker;
+	ResourceStateTracker mResourceTracker;
 
 	struct HeapData
 	{

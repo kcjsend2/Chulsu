@@ -150,6 +150,7 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
         mFrameObjects[i].rtvHandle = CreateRTV(mD3dDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
     }
 
+    mResourceTracker.AddTrackingResource(mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
     // Create the command-list
     mD3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCmdAllocator[0].Get(), nullptr, IID_PPV_ARGS(&mD3dCmdList));
 
@@ -161,6 +162,8 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::Draw()
 {
+    mResourceTracker.TransitionBarrier(mD3dCmdList, mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
+    mResourceTracker.TransitionBarrier(mD3dCmdList, mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void DX12Renderer::WaitUntilGPUComplete()
