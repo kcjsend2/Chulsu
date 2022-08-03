@@ -162,8 +162,6 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::Draw()
 {
-    mResourceTracker.TransitionBarrier(mD3dCmdList, mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
-    mResourceTracker.TransitionBarrier(mD3dCmdList, mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
 }
 
 void DX12Renderer::WaitUntilGPUComplete()
