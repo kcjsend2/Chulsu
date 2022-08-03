@@ -25,16 +25,15 @@ private:
 	static const UINT mSwapChainBufferCount = 2;
 
 	ComPtr<ID3D12Device5> mD3dDevice;
-	ComPtr<ID3D12GraphicsCommandList4> mD3dCmdList;
-	ComPtr<ID3D12CommandQueue> mCommandQueue;
-	ComPtr<ID3D12CommandAllocator> mCmdAllocator[mSwapChainBufferCount];
+	ComPtr<ID3D12GraphicsCommandList4> mCmdList;
+	ComPtr<ID3D12CommandQueue> mCmdQueue;
 	ComPtr<IDXGIFactory4> mDxgiFactory;
 	ComPtr<IDXGISwapChain3> mSwapChain;
 
 	D3D12MA::Allocator* mMemAllocator = NULL;
 
 	ComPtr<ID3D12Fence> mFence;
-	UINT64 mFenceValues[mSwapChainBufferCount] = {0, 0};
+	UINT64 mFenceValue = 0;
 	HANDLE mFenceEvent = NULL;
 
 	ResourceStateTracker mResourceTracker;
@@ -48,6 +47,7 @@ private:
 
 	struct FrameObject
 	{
+		ComPtr<ID3D12CommandAllocator> pCommandAllocator;
 		ComPtr<ID3D12Resource> pSwapChainBuffer;
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
 	};

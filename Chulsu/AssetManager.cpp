@@ -5,7 +5,7 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 {
 	std::vector<shared_ptr<Mesh>> Meshes;
 
-	Assimp::Importer   Importer;
+	Assimp::Importer Importer;
 	constexpr uint32_t ImporterFlags =
 		aiProcess_ConvertToLeftHanded |
 		aiProcess_JoinIdenticalVertices |

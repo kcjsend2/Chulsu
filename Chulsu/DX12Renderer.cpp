@@ -136,8 +136,8 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     ComPtr<IDXGIFactory4> pDxgiFactory;
     CreateDXGIFactory1(IID_PPV_ARGS(&pDxgiFactory));
     mD3dDevice = CreateDevice(pDxgiFactory);
-    mCommandQueue = CreateCommandQueue(mD3dDevice);
-    mSwapChain = CreateDxgiSwapChain(pDxgiFactory, mWinHandle, winWidth, winHeight, DXGI_FORMAT_R8G8B8A8_UNORM, mCommandQueue);
+    mCmdQueue = CreateCommandQueue(mD3dDevice);
+    mSwapChain = CreateDxgiSwapChain(pDxgiFactory, mWinHandle, winWidth, winHeight, DXGI_FORMAT_R8G8B8A8_UNORM, mCmdQueue);
 
     // Create a RTV descriptor heap
     mRtvHeap.pHeap = CreateDescriptorHeap(mD3dDevice, mRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
@@ -145,14 +145,14 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     // Create the per-frame objects
     for (uint32_t i = 0; i < mSwapChainBufferCount; i++)
     {
-        mD3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mCmdAllocator[i]));
+        mD3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrameObjects[i].pCommandAllocator));
         mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrameObjects[i].pSwapChainBuffer));
         mFrameObjects[i].rtvHandle = CreateRTV(mD3dDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
     }
 
     mResourceTracker.AddTrackingResource(mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
     // Create the command-list
-    mD3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mCmdAllocator[0].Get(), nullptr, IID_PPV_ARGS(&mD3dCmdList));
+    mD3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mFrameObjects[0].pCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&mCmdList));
 
     // Create a fence and the event
     mD3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
@@ -162,12 +162,35 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::Draw()
 {
+    const float clearColor[4] = { 0.4f, 0.6f, 0.2f, 1.0f };
+
+    auto rtvIndex = mSwapChain->GetCurrentBackBufferIndex();
+    mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
+    mCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
+
+    mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
+
+    mCmdList->Close();
+    ID3D12CommandList* cmdList[] = { mCmdList.Get() };
+    mCmdQueue->ExecuteCommandLists(_countof(cmdList), cmdList);
+    mFenceValue++;
+    mCmdQueue->Signal(mFence.Get(), mFenceValue);
+
+    mSwapChain->Present(0, 0);
+
+    // Prepare the command list for the next frame
+    uint32_t bufferIndex = mSwapChain->GetCurrentBackBufferIndex();
+
+    WaitUntilGPUComplete();
+
+    mFrameObjects[bufferIndex].pCommandAllocator->Reset();
+    mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);
 }
 
 void DX12Renderer::WaitUntilGPUComplete()
 {
-	UINT64 currFenceValue = ++mFenceValues[mCurrBackBufferIndex];
-	ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), currFenceValue));
+	UINT64 currFenceValue = ++mFenceValue;
+	ThrowIfFailed(mCmdQueue->Signal(mFence.Get(), currFenceValue));
 	if (mFence->GetCompletedValue() < currFenceValue)
 	{
 		ThrowIfFailed(mFence->SetEventOnCompletion(currFenceValue, mFenceEvent));
