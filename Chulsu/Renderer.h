@@ -8,10 +8,9 @@ public:
 	~Renderer() {}
 
 	virtual void Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight) {}
-	virtual void Release() {}
 	virtual void Draw() {}
 
 protected:
-	HWND mWinHandle;
-	XMFLOAT2 mSwapChainSize;
+	HWND mWinHandle = NULL;
+	XMFLOAT2 mSwapChainSize = {0, 0};
 };
