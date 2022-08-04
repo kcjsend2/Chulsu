@@ -55,9 +55,7 @@ ComPtr<ID3D12Device5> DX12Renderer::CreateDevice(ComPtr<IDXGIFactory4> pDxgiFact
         {
             D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
 
-            ID3D12Device* allocatorDevice;
-            pDevice->QueryInterface(IID_PPV_ARGS(&allocatorDevice));
-            allocatorDesc.pDevice = allocatorDevice;
+            allocatorDesc.pDevice = pDevice.Get();
 
             IDXGIAdapter* allocatorAdapter;
             pAdapter->QueryInterface(IID_PPV_ARGS(&allocatorAdapter));
