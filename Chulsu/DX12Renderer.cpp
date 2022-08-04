@@ -5,13 +5,6 @@ DX12Renderer::~DX12Renderer()
     if (mD3dDevice) WaitUntilGPUComplete();
     if (mFenceEvent) CloseHandle(mFenceEvent);
     mMemAllocator->Release();
-
-    ID3D12DebugDevice* debugInterface;
-    if (SUCCEEDED(mD3dDevice->QueryInterface(&debugInterface)))
-    {
-        debugInterface->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
-        debugInterface->Release();
-    }
 }
 
 ComPtr<IDXGISwapChain3> DX12Renderer::CreateDxgiSwapChain(ComPtr<IDXGIFactory4> pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ComPtr<ID3D12CommandQueue> pCommandQueue)

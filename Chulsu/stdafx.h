@@ -95,6 +95,15 @@ inline string wstringTostring(const wstring& ws)
 	return s;
 }
 
+inline void ReportLiveObjects()
+{
+	Microsoft::WRL::ComPtr<IDXGIDebug1> dxgi_debug;
+	if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgi_debug.GetAddressOf()))))
+	{
+		dxgi_debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
+	}
+}
+
 #ifndef ThrowIfFailed
 #define ThrowIfFailed(f)												\
 {																		\

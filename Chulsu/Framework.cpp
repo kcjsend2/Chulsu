@@ -26,7 +26,7 @@ void Framework::Run()
     mWidth = r.right - r.left;
     mHeight = r.bottom - r.top;
 
-
+    std::atexit(ReportLiveObjects);
     ShowWindow(mWinHandle, SW_SHOWNORMAL);
 
     mRenderer = make_shared<DX12Renderer>();
