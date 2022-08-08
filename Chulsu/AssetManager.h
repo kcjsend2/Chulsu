@@ -6,7 +6,7 @@ class AssetManager
 {
 public:
 	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ResourceStateTracker tracker, const std::string& path);
+		D3D12MA::Allocator* allocator, ResourceStateTracker tracker, const std::string& path);
 
 private:
 	unordered_map<string, vector<shared_ptr<Mesh>>> mCachedMeshes;

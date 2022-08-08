@@ -53,7 +53,7 @@ void Mesh::InitializeMeshBuffers(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* allocator,
-	ResourceStateTracker& tracker,
+	ResourceStateTracker tracker,
 	UINT vbStride, UINT ibStride,
 	D3D12_PRIMITIVE_TOPOLOGY topology,
 	const void* vbData, UINT vbCount,

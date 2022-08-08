@@ -151,7 +151,6 @@
   <ItemGroup>
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="D3D12MemAlloc.cpp" />
-    <ClCompile Include="DDSTextureLoader12.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ResourceStateTracker.cpp" />
@@ -163,7 +162,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
-    <ClInclude Include="DDSTextureLoader12.h" />
+    <ClInclude Include="D3D12MemAlloc.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ResourceStateTracker.h" />
