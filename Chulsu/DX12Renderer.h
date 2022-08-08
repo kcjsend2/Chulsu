@@ -1,6 +1,5 @@
 #pragma once
 #include "Renderer.h"
-#include "ResourceStateTracker.h"
 
 class DX12Renderer : public Renderer
 {

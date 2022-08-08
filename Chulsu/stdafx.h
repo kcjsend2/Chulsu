@@ -55,6 +55,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "ResourceStateTracker.h"
+#include "DDSTextureLoader12.h"
 #include "D3D12MemAlloc.h"
 
 using namespace std;

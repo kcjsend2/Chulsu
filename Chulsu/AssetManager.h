@@ -12,6 +12,6 @@ private:
 	unordered_map<string, vector<shared_ptr<Mesh>>> mCachedMeshes;
 	//unordered_map<string, shared_ptr<Texture>> mCachedTextures;
 
-	//EVERY Texture will stores here for THE TECHNIQUE OF THE GOD (I mean, Bindless Resources.)
+	//EVERY Texture will store here for THE TECHNIQUE OF THE GOD (I mean, Bindless Resources.)
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap;
 };
