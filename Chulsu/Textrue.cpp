@@ -15,29 +15,52 @@ void Texture::LoadTextureFromDDS(
 	DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
 	bool isCubeMap = false;
 
-	LoadDDSTextureFromFileEx(
-		device, filePath.c_str(), 0,
-		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT,
-		nullptr, ddsData, subresources, &alphaMode, &isCubeMap);
+	DirectX::ScratchImage* imageData = new DirectX::ScratchImage();
+	HRESULT loadResult = DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, *imageData);
+	assert(loadResult == S_OK);
+
+	const DirectX::TexMetadata& textureMetaData = imageData->GetMetadata();
+	DXGI_FORMAT textureFormat = textureMetaData.format;
+	bool is3DTexture = textureMetaData.dimension == DirectX::TEX_DIMENSION_TEXTURE3D;
+
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(is3DTexture ? D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, textureMetaData.width, textureMetaData.height,
+		is3DTexture ? textureMetaData.depth : textureMetaData.arraySize,
+		textureMetaData.mipLevels, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_NONE);
+
+	D3D12MA::ALLOCATION_DESC allocationDesc = {};
+	allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+	allocator->CreateResource(
+		&allocationDesc,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		NULL,
+		&mTextureBufferAlloc,
+		IID_NULL, NULL);
 
 	const UINT subresourcesCount = (UINT)subresources.size();
-	UINT64 bytes = GetRequiredIntermediateSize(mTexResource.Get(), 0, subresourcesCount);
+	UINT64 bytes = GetRequiredIntermediateSize(mTextureBufferAlloc->GetResource(), 0, subresourcesCount);
 
-	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-		bytes, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	ComPtr<D3D12MA::Allocation> uploadAlloc;
+	allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
+	resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
+		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, bytes, 1, 1,
+		1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
-	device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+	allocator->CreateResource(
+		&allocationDesc,
 		&resourceDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
-		IID_PPV_ARGS(mUploadBuffer.GetAddressOf()));
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		NULL,
+		&uploadAlloc,
+		IID_NULL, NULL);
 
-	UpdateSubresources(cmdList, mTexResource.Get(), mUploadBuffer.Get(),
+	UpdateSubresources(cmdList, mTextureBufferAlloc->GetResource(), uploadAlloc->GetResource(),
 		0, 0, subresourcesCount, subresources.data());
 
-
-	tracker.AddTrackingResource(mTexResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
-	tracker.TransitionBarrier(cmdList, mTexResource.Get(), resourceStates);
+	tracker.AddTrackingResource(mTextureBufferAlloc->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST);
+	tracker.TransitionBarrier(cmdList, mTextureBufferAlloc->GetResource(), resourceStates);
 }
 
 void Texture::CreateTexture(

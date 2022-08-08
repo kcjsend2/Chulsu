@@ -56,6 +56,7 @@
 #include <assimp/postprocess.h>
 
 #include "ResourceStateTracker.h"
+#include "DirectXTex.h"
 #include "DDSTextureLoader12.h"
 #include "D3D12MemAlloc.h"
 
@@ -70,6 +71,8 @@ extern int gFrameHeight;
 
 #define arraysize(a) (sizeof(a)/sizeof(a[0]))
 #define align_to(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
+
+#define MAX_TEXTURE_SUBRESOURCE_COUNT 3
 
 inline UINT GetConstantBufferSize(UINT bytes)
 {
