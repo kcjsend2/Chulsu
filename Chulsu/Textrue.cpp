@@ -5,7 +5,6 @@
 void Texture::LoadTextureFromDDS(
 	ID3D12Device* device,
 	ID3D12GraphicsCommandList* cmdList,
-	D3D12MA::Allocator* allocator,
 	ResourceStateTracker& tracker,
 	const std::wstring& filePath,
 	D3D12_RESOURCE_STATES resourceStates)

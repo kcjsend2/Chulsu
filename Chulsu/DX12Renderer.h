@@ -29,8 +29,6 @@ private:
 	ComPtr<IDXGIFactory4> mDxgiFactory;
 	ComPtr<IDXGISwapChain3> mSwapChain;
 
-	D3D12MA::Allocator* mMemAllocator = NULL;
-
 	ComPtr<ID3D12Fence> mFence;
 	UINT64 mFenceValue = 0;
 	HANDLE mFenceEvent = NULL;

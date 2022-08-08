@@ -9,7 +9,6 @@ public:
 	void LoadTextureFromDDS(
 		ID3D12Device* device,
 		ID3D12GraphicsCommandList* cmdList,
-		D3D12MA::Allocator* allocator,
 		ResourceStateTracker& tracker,
 		const std::wstring& filePath,
 		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -24,10 +23,10 @@ public:
 
 public:
 	D3D12_SHADER_RESOURCE_VIEW_DESC ShaderResourceView() const;
-	ID3D12Resource* GetResource() const { return mTextureBufferAlloc->GetResource(); }
+	ID3D12Resource* GetResource() const { return mTextureResource.Get(); }
 
 protected:
-	ComPtr<D3D12MA::Allocation> mTextureBufferAlloc;
+	ComPtr<ID3D12Resource> mTextureResource;
 
 	D3D12_SRV_DIMENSION mViewDimension{};
 
