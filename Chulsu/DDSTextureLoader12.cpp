@@ -1866,8 +1866,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
     return hr;
 }
 
-_Use_decl_annotations_
-HRESULT LoadDDSTextureFromFileEx(
+HRESULT DirectX::LoadDDSTextureFromFileEx(
     ID3D12Device* d3dDevice,
     const wchar_t* fileName,
     size_t maxsize,
