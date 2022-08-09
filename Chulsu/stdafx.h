@@ -57,8 +57,8 @@
 
 #include "ResourceStateTracker.h"
 #include "DirectXTex.h"
-#include "DDSTextureLoader12.h"
 #include "D3D12MemAlloc.h"
+#include "DDSTextureLoader12.h"
 
 using namespace std;
 using namespace DirectX;

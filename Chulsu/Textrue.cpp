@@ -3,9 +3,9 @@
 
 
 void Texture::LoadTextureFromDDS(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList* cmdList,
-	D3D12MA::Allocator* allocator,
+	ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
+	D3D12MA::Allocator* d3dAllocator,
 	ResourceStateTracker& tracker,
 	const std::wstring& filePath,
 	D3D12_RESOURCE_STATES resourceStates)
@@ -15,40 +15,24 @@ void Texture::LoadTextureFromDDS(
 	DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
 	bool isCubeMap = false;
 
-	DirectX::ScratchImage* imageData = new DirectX::ScratchImage();
-	HRESULT loadResult = DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, *imageData);
-	assert(loadResult == S_OK);
-
-	const DirectX::TexMetadata& textureMetaData = imageData->GetMetadata();
-	DXGI_FORMAT textureFormat = textureMetaData.format;
-	bool is3DTexture = textureMetaData.dimension == DirectX::TEX_DIMENSION_TEXTURE3D;
-
-	auto resourceDesc = CD3DX12_RESOURCE_DESC(is3DTexture ? D3D12_RESOURCE_DIMENSION_TEXTURE3D : D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, textureMetaData.width, textureMetaData.height,
-		is3DTexture ? textureMetaData.depth : textureMetaData.arraySize,
-		textureMetaData.mipLevels, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_NONE);
-
-	D3D12MA::ALLOCATION_DESC allocationDesc = {};
-	allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-
-	allocator->CreateResource(
-		&allocationDesc,
-		&resourceDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST,
-		NULL,
-		&mTextureBufferAlloc,
-		IID_NULL, NULL);
+	ComPtr<D3D12MA::Allocation> textureAlloc;
+	LoadDDSTextureFromFileEx(
+		device, filePath.c_str(), 0,
+		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT,
+		textureAlloc.Get(), d3dAllocator, ddsData, subresources, &alphaMode, &isCubeMap);
 
 	const UINT subresourcesCount = (UINT)subresources.size();
 	UINT64 bytes = GetRequiredIntermediateSize(mTextureBufferAlloc->GetResource(), 0, subresourcesCount);
 
 	ComPtr<D3D12MA::Allocation> uploadAlloc;
+	D3D12MA::ALLOCATION_DESC allocationDesc;
 	allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-	resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
+
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
 		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, bytes, 1, 1,
 		1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
-	allocator->CreateResource(
+	d3dAllocator->CreateResource(
 		&allocationDesc,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -64,19 +48,19 @@ void Texture::LoadTextureFromDDS(
 }
 
 void Texture::CreateTexture(
-	ID3D12Device* device,
+	ID3D12Device5* device,
 	UINT width, UINT height, UINT elements, UINT miplevels,
 	DXGI_FORMAT format, D3D12_RESOURCE_FLAGS resourceFlags,
 	D3D12_RESOURCE_STATES resourceStates, D3D12_CLEAR_VALUE* clearValue)
 {
-	mTexResource = CreateTexture2DResource(device, width, height, elements, miplevels, format, resourceFlags, resourceStates, clearValue);
+	//mTexResource = CreateTexture2DResource(device, width, height, elements, miplevels, format, resourceFlags, resourceStates, clearValue);
 }
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture::ShaderResourceView() const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.Format = mTexResource->GetDesc().Format;
+	srvDesc.Format = mTextureBufferAlloc->GetResource()->GetDesc().Format;
 	srvDesc.ViewDimension = mViewDimension;
 
 	switch (mViewDimension)
@@ -94,7 +78,7 @@ D3D12_SHADER_RESOURCE_VIEW_DESC Texture::ShaderResourceView() const
 		srvDesc.Texture2DArray.PlaneSlice = 0;
 		srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
 		srvDesc.Texture2DArray.FirstArraySlice = 0;
-		srvDesc.Texture2DArray.ArraySize = mTexResource->GetDesc().DepthOrArraySize;
+		srvDesc.Texture2DArray.ArraySize = mTextureBufferAlloc->GetResource()->GetDesc().DepthOrArraySize;
 		break;
 
 	case D3D12_SRV_DIMENSION_TEXTURECUBE:

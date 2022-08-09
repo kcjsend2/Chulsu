@@ -1865,3 +1865,60 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
 
     return hr;
 }
+
+_Use_decl_annotations_
+HRESULT LoadDDSTextureFromFileEx(
+    ID3D12Device* d3dDevice,
+    const wchar_t* fileName,
+    size_t maxsize,
+    D3D12_RESOURCE_FLAGS resFlags,
+    unsigned int loadFlags,
+    D3D12MA::Allocation* textureAlloc,
+    D3D12MA::Allocator* d3dAllocator,
+    std::unique_ptr<uint8_t[]>& ddsData,
+    std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
+    DDS_ALPHA_MODE* alphaMode,
+    bool* isCubeMap)
+{
+    if (alphaMode)
+    {
+        *alphaMode = DDS_ALPHA_MODE_UNKNOWN;
+    }
+    if (isCubeMap)
+    {
+        *isCubeMap = false;
+    }
+
+    if (!d3dDevice || !fileName)
+    {
+        return E_INVALIDARG;
+    }
+
+    const DDS_HEADER* header = nullptr;
+    const uint8_t* bitData = nullptr;
+    size_t bitSize = 0;
+
+    HRESULT hr = LoadTextureDataFromFile(fileName,
+        ddsData,
+        &header,
+        &bitData,
+        &bitSize
+    );
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = CreateTextureFromDDS(d3dDevice,
+        header, bitData, bitSize, maxsize,
+        resFlags, loadFlags,
+        textureAlloc, d3dAllocator, subresources, isCubeMap);
+
+    if (SUCCEEDED(hr))
+    {
+        if (alphaMode)
+            *alphaMode = GetAlphaMode(header);
+    }
+
+    return hr;
+}
