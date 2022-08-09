@@ -1,5 +1,9 @@
 #include "DX12Renderer.h"
 
+DX12Renderer::DX12Renderer()
+{
+}
+
 DX12Renderer::~DX12Renderer()
 {
     if (mD3dDevice) WaitUntilGPUComplete();
@@ -149,6 +153,8 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     // Create a fence and the event
     mD3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+    mAssetMgr.mCbvSrvUavDescriptorSize = mD3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 

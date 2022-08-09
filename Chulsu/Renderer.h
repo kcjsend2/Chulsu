@@ -1,6 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "AssetManager.h"
 
 class Renderer
 {
@@ -14,5 +13,4 @@ public:
 protected:
 	HWND mWinHandle = NULL;
 	XMFLOAT2 mSwapChainSize = {0, 0};
-	AssetManager mAssetMgr;
 };

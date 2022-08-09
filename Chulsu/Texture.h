@@ -31,6 +31,9 @@ protected:
 
 	D3D12_SRV_DIMENSION mViewDimension{};
 
-	DXGI_FORMAT mBufferFormats{};
+	DXGI_FORMAT mBufferFormats	{};
 	UINT mBufferElementsCount = 0;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE mCPUHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE mGPUHandle;
 };

@@ -1,10 +1,11 @@
 #pragma once
 #include "Renderer.h"
+#include "AssetManager.h"
 
 class DX12Renderer : public Renderer
 {
 public:
-	DX12Renderer() {}
+	DX12Renderer();
 	~DX12Renderer();
 
 	virtual void Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight) override;
@@ -51,4 +52,6 @@ private:
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
 	};
 	FrameObject mFrameObjects[mSwapChainBufferCount];
+
+	AssetManager mAssetMgr;
 };
