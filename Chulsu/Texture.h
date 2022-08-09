@@ -14,13 +14,9 @@ public:
 		const std::wstring& filePath,
 		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	void CreateTexture(
-		ID3D12Device5* device,
-		UINT width, UINT height, UINT elements, UINT miplevels,
-		DXGI_FORMAT format, D3D12_RESOURCE_FLAGS resourceFlags,
-		D3D12_RESOURCE_STATES resourceStates, D3D12_CLEAR_VALUE* clearValue);
-
 	void SetDimension(D3D12_SRV_DIMENSION dimension) { mViewDimension = dimension; }
+	string SetName(string name) { mName = name; }
+	string GetName() { return mName; }
 
 public:
 	D3D12_SHADER_RESOURCE_VIEW_DESC ShaderResourceView() const;
@@ -36,4 +32,7 @@ protected:
 
 	D3D12_CPU_DESCRIPTOR_HANDLE mCPUHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE mGPUHandle;
+
+
+	string mName = {};
 };

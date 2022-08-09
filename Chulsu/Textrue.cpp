@@ -14,6 +14,7 @@ void Texture::LoadTextureFromDDS(
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DDS_ALPHA_MODE alphaMode = DDS_ALPHA_MODE_UNKNOWN;
 	bool isCubeMap = false;
+	mName = wstringTostring(filePath);
 
 	ComPtr<D3D12MA::Allocation> textureAlloc;
 	LoadDDSTextureFromFileEx(
@@ -45,15 +46,6 @@ void Texture::LoadTextureFromDDS(
 
 	tracker.AddTrackingResource(mTextureBufferAlloc->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST);
 	tracker.TransitionBarrier(cmdList, mTextureBufferAlloc->GetResource(), resourceStates);
-}
-
-void Texture::CreateTexture(
-	ID3D12Device5* device,
-	UINT width, UINT height, UINT elements, UINT miplevels,
-	DXGI_FORMAT format, D3D12_RESOURCE_FLAGS resourceFlags,
-	D3D12_RESOURCE_STATES resourceStates, D3D12_CLEAR_VALUE* clearValue)
-{
-	//mTexResource = CreateTexture2DResource(device, width, height, elements, miplevels, format, resourceFlags, resourceStates, clearValue);
 }
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture::ShaderResourceView() const
