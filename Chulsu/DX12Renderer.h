@@ -53,5 +53,5 @@ private:
 	};
 	FrameObject mFrameObjects[mSwapChainBufferCount];
 
-	AssetManager mAssetMgr;
+	shared_ptr<AssetManager> mAssetMgr = NULL;
 };

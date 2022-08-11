@@ -11,7 +11,11 @@ public:
 	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker tracker, const std::string& path);
 
+	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHanlde(const UINT& index);
+	D3D12_GPU_DESCRIPTOR_HANDLE GetIndexedGPUHanlde(const UINT& index);
+
 	// NOT YET IMPLEMETNED!!!!!!!
+
 	void LoadTexture();
 
 	UINT mCbvSrvUavDescriptorSize = 0;
@@ -22,4 +26,5 @@ private:
 
 	//EVERY Texture will store here for THE TECHNIQUE OF THE GOD (I mean, Bindless Resources.)
 	ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
+	UINT mHeapUsedIndex = 0;
 };

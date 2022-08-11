@@ -81,5 +81,27 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		Meshes.push_back(mesh);
 	}
 
-	mCachedMeshes[path] = Meshes;
+	mMeshes[path] = Meshes;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHanlde(const UINT& index)
+{
+	auto cpuStart = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	cpuStart.ptr += mCbvSrvUavDescriptorSize * index;
+
+	return cpuStart;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHanlde(const UINT& index)
+{
+	auto gpuStart = mDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+	gpuStart.ptr += mCbvSrvUavDescriptorSize * index;
+
+	return gpuStart;
+}
+
+void AssetManager::LoadTexture()
+{
 }
