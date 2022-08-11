@@ -33,6 +33,7 @@ protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE mCPUHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE mGPUHandle;
 
+	UINT mDescriptorHeapIndex;
 
 	string mName = {};
 };

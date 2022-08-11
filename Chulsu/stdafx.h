@@ -109,6 +109,20 @@ inline void ReportLiveObjects()
 	}
 }
 
+inline D3D12_DESCRIPTOR_HEAP_DESC DescriptorHeapDesc(
+	UINT numDescriptors,
+	D3D12_DESCRIPTOR_HEAP_TYPE descriptorType,
+	D3D12_DESCRIPTOR_HEAP_FLAGS descriptorFlags,
+	UINT NodeMase)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
+	descriptorHeapDesc.NumDescriptors = numDescriptors;
+	descriptorHeapDesc.Type = descriptorType;
+	descriptorHeapDesc.Flags = descriptorFlags;
+	descriptorHeapDesc.NodeMask = 0;
+	return descriptorHeapDesc;
+}
+
 #ifndef ThrowIfFailed
 #define ThrowIfFailed(f)												\
 {																		\

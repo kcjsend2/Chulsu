@@ -1,5 +1,16 @@
 #include "AssetManager.h"
 
+AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
+{
+	ThrowIfFailed(device->CreateDescriptorHeap(
+		&DescriptorHeapDesc(
+			numDescriptor,
+			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+			D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+			0),
+		IID_PPV_ARGS(&mDescriptorHeap)));
+}
+
 void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* allocator, ResourceStateTracker tracker, const std::string& path)
 {
