@@ -48,6 +48,13 @@ void Texture::LoadTextureFromDDS(
 	tracker.TransitionBarrier(cmdList, mTextureBufferAlloc->GetResource(), resourceStates);
 }
 
+void Texture::SetDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex)
+{
+	mCPUHandle = cpuHandle;
+	mGPUHandle = gpuHandle;
+	mDescriptorHeapIndex = DescriptorHeapIndex;
+}
+
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture::ShaderResourceView() const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};

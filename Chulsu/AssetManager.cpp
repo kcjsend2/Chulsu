@@ -12,7 +12,7 @@ AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
 }
 
 void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* allocator, ResourceStateTracker tracker, const std::string& path)
+	D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path)
 {
 	std::vector<shared_ptr<Mesh>> Meshes;
 
@@ -84,7 +84,7 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	mMeshes[path] = Meshes;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHanlde(const UINT& index)
+D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
 {
 	auto cpuStart = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
@@ -93,7 +93,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHanlde(const UINT& index)
 	return cpuStart;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHanlde(const UINT& index)
+D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHandle(const UINT& index)
 {
 	auto gpuStart = mDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
@@ -102,6 +102,23 @@ D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHanlde(const UINT& index)
 	return gpuStart;
 }
 
-void AssetManager::LoadTexture()
+void AssetManager::LoadTexture(ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
+	D3D12MA::Allocator* d3dAllocator,
+	ResourceStateTracker& tracker,
+	const std::wstring& filePath,
+	D3D12_RESOURCE_STATES resourceStates)
 {
+	shared_ptr<Texture> newTexture = make_shared<Texture>();
+	newTexture->LoadTextureFromDDS(device, cmdList, d3dAllocator, tracker, filePath, resourceStates);
+
+	auto textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
+	auto textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
+
+	device->CreateShaderResourceView(newTexture->GetResource(), &newTexture->ShaderResourceView(), textureCPUHandle);
+	newTexture->SetDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
+
+	mTextures.push_back(newTexture);
+
+	mHeapCurrentIndex++;
 }

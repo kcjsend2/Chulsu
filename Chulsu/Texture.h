@@ -14,6 +14,8 @@ public:
 		const std::wstring& filePath,
 		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+	void SetDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex);
+
 	void SetDimension(D3D12_SRV_DIMENSION dimension) { mViewDimension = dimension; }
 	string SetName(string name) { mName = name; }
 	string GetName() { return mName; }
