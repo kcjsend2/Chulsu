@@ -2,12 +2,14 @@
 
 AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
 {
+	auto descHeapDescriptor = DescriptorHeapDesc(
+		numDescriptor,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		0);
+
 	ThrowIfFailed(device->CreateDescriptorHeap(
-		&DescriptorHeapDesc(
-			numDescriptor,
-			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-			D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-			0),
+		&descHeapDescriptor,
 		IID_PPV_ARGS(&mDescriptorHeap)));
 }
 
@@ -116,7 +118,8 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	auto textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
 	auto textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
 
-	device->CreateShaderResourceView(newTexture->GetResource(), &newTexture->ShaderResourceView(), textureCPUHandle);
+	auto srv = newTexture->ShaderResourceView();
+	device->CreateShaderResourceView(newTexture->GetResource(), &srv, textureCPUHandle);
 	newTexture->SetDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
 
 	newTexture->SetDimension(dimension);

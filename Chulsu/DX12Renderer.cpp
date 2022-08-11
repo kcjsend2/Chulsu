@@ -155,7 +155,7 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
 
-    mAssetMgr = make_shared<AssetManager>(mD3dDevice, 256);
+    mAssetMgr = make_shared<AssetManager>(mD3dDevice.Get(), 256);
     mAssetMgr->mCbvSrvUavDescriptorSize = mD3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
