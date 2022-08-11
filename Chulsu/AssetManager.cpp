@@ -209,10 +209,10 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	uavBarrier.UAV.pResource = buffers.mResult->GetResource();
 	cmdList->ResourceBarrier(1, &uavBarrier);
 
-	mBLAS = buffers;
+	mBLAS.push_back(buffers.mResult);
 }
 
-void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* pBottomLevelAS[2], uint64_t& tlasSize)
+void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, uint64_t& tlasSize)
 {
 	// First, get the size of the TLAS buffers and create them
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -226,38 +226,32 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	// Create the buffers
 	AccelerationStructureBuffers buffers;
-	buffers.mScratch = createBuffer(pDevice, info.ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, kDefaultHeapProps);
-	buffers.mResult = createBuffer(pDevice, info.ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, kDefaultHeapProps);
+	buffers.mScratch = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	buffers.mResult = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes,
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	tlasSize = info.ResultDataMaxSizeInBytes;
 
 	// The instance desc should be inside a buffer, create and map the buffer
-	buffers.mInstanceDesc = createBuffer(pDevice, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 3, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_GENERIC_READ, kUploadHeapProps);
+	buffers.mInstanceDesc = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mBLAS.size(),
+		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
+
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
 	buffers.mInstanceDesc->GetResource()->Map(0, nullptr, (void**)&instanceDescs);
 	ZeroMemory(instanceDescs, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 3);
 
 	// The transformation matrices for the instances
-	XMFLOAT4X4 transformation[3];
-	transformation[0] = Matrix4x4::Identity4x4(); // Identity
-	transformation[1] = Matrix4x4::Identity4x4();
-	transformation[2] = Matrix4x4::Identity4x4();
+	XMFLOAT4X4 transform;
+	transform = Matrix4x4::Identity4x4(); // Identity
 
-	// Create the desc for the triangle/plane instance
-	instanceDescs[0].InstanceID = 0;
-	instanceDescs[0].InstanceContributionToHitGroupIndex = 0;
-	instanceDescs[0].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-	instanceDescs[0].Transform = NULL;
-	instanceDescs[0].AccelerationStructure = pBottomLevelAS[0]->GetGPUVirtualAddress();
-	instanceDescs[0].InstanceMask = 0xFF;
-
-	for (uint32_t i = 1; i < 3; i++)
+	for (uint32_t i = 0; i < mBLAS.size(); i++)
 	{
 		instanceDescs[i].InstanceID = i; // This value will be exposed to the shader via InstanceID()
 		instanceDescs[i].InstanceContributionToHitGroupIndex = i;  // This is the offset inside the shader-table. Since we have unique constant-buffer for each instance, we need a different offset
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-		mat4 m = transpose(transformation[i]); // GLM is column major, the INSTANCE_DESC is row major
+		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
-		instanceDescs[i].AccelerationStructure = pBottomLevelAS[1]->GetGPUVirtualAddress();
+		instanceDescs[i].AccelerationStructure = mBLAS[i]->GetResource()->GetGPUVirtualAddress();
 		instanceDescs[i].InstanceMask = 0xFF;
 	}
 

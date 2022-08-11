@@ -37,9 +37,9 @@ public:
 	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes);
 
 	// We will move this function to scene class later.
-	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, ID3D12Resource* pBottomLevelAS[2], uint64_t& tlasSize);
+	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, uint64_t& tlasSize);
 
-	AccelerationStructureBuffers GetBLAS() { return mBLAS; }
+	vector<ComPtr<D3D12MA::Allocation>>& GetBLAS() { return mBLAS; }
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
 
 	UINT mCbvSrvUavDescriptorSize = 0;
@@ -48,7 +48,7 @@ private:
 	unordered_map<string, vector<shared_ptr<Mesh>>> mMeshMap;
 	vector<shared_ptr<Texture>> mTextures;
 
-	AccelerationStructureBuffers mBLAS;
+	vector<ComPtr<D3D12MA::Allocation>> mBLAS;
 	AccelerationStructureBuffers mTLAS;
 
 	//EVERY Texture will store here for Bindless Resources Technique.
