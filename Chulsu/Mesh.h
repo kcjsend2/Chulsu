@@ -1,14 +1,14 @@
 #pragma once
 #include "stdafx.h"
 
-class Vertex
+struct Vertex
 {
 public:
-	XMFLOAT3 position;
-	XMFLOAT3 normal;
-	XMFLOAT2 texCoord;
-	XMFLOAT3 tangent;
-	XMFLOAT3 biTangent;
+	XMFLOAT3 position = {0, 0, 0};
+	XMFLOAT3 normal = { 0, 0, 0 };
+	XMFLOAT2 texCoord = { 0, 0 };
+	XMFLOAT3 tangent = { 0, 0, 0 };
+	XMFLOAT3 biTangent = { 0, 0, 0 };
 };
 
 class Mesh	
@@ -19,6 +19,12 @@ public:
 
 	void InitializeMeshBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker tracker, UINT vbStride, UINT ibStride, D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
+
+	UINT GetVertexCount() { return mVerticesCount; }
+	UINT GetIndexCount() { return mIndexCount; }
+
+	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc () { return mVertexBufferAlloc; }
+	ComPtr<D3D12MA::Allocation> GetIndexBufferAlloc() { return mIndexBufferAlloc; }
 
 private:
 	int mAlbedoTextureIndex = NULL;
@@ -40,7 +46,4 @@ private:
 	UINT mVerticesCount = 0;
 	UINT mVertexStride = 0;
 	UINT mIndexCount = 0;
-
-	ComPtr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const void* initData, UINT64 byteSize, D3D12MA::Allocation* uploadBuffer, D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 };

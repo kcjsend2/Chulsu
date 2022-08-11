@@ -55,7 +55,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "ResourceStateTracker.h"
 #include "DirectXTex.h"
 #include "D3D12MemAlloc.h"
 #include "DDSTextureLoader12.h"
@@ -73,6 +72,31 @@ extern int gFrameHeight;
 #define align_to(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
 
 #define MAX_TEXTURE_SUBRESOURCE_COUNT 3
+
+
+class ResourceStateTracker
+{
+public:
+	ResourceStateTracker() {}
+	~ResourceStateTracker()
+	{
+		mResourceStateMap.clear();
+	}
+
+	void TransitionBarrier(ComPtr<ID3D12GraphicsCommandList4> CmdList, ID3D12Resource* resource, D3D12_RESOURCE_STATES state)
+	{
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, mResourceStateMap[resource], state, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+		mResourceStateMap[resource] = state;
+		CmdList->ResourceBarrier(1, &barrier);
+	}
+
+	void AddTrackingResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES state) { mResourceStateMap[resource] = state; }
+	D3D12_RESOURCE_STATES GetResourceState(ID3D12Resource* resource) { return mResourceStateMap[resource]; }
+
+private:
+	unordered_map<ID3D12Resource*, D3D12_RESOURCE_STATES> mResourceStateMap;
+};
+
 
 inline UINT GetConstantBufferSize(UINT bytes)
 {
@@ -123,6 +147,58 @@ inline D3D12_DESCRIPTOR_HEAP_DESC DescriptorHeapDesc(
 	return descriptorHeapDesc;
 }
 
+inline ComPtr<D3D12MA::Allocation> CreateBufferResource(
+	ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
+	D3D12MA::Allocator* allocator,
+	ResourceStateTracker& tracker,
+	const void* initData, UINT64 byteSize,
+	D3D12_RESOURCE_STATES initialState,
+	D3D12_RESOURCE_FLAGS flag,
+	D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT)
+{
+	D3D12MA::Allocation* UploadAlloc = nullptr;
+
+	D3D12MA::ALLOCATION_DESC allocationDesc = {};
+	allocationDesc.HeapType = heapType;
+
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+		byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+
+	D3D12MA::Allocation* defaultAllocation;
+	allocator->CreateResource(
+		&allocationDesc,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		NULL,
+		&defaultAllocation,
+		IID_NULL, NULL);
+
+	allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
+	allocator->CreateResource(
+		&allocationDesc,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		NULL,
+		&UploadAlloc,
+		IID_NULL, NULL);
+
+	tracker.AddTrackingResource(defaultAllocation->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST);
+
+	D3D12_SUBRESOURCE_DATA subresourceData = {};
+	subresourceData.pData = initData;
+	subresourceData.RowPitch = byteSize;
+	subresourceData.SlicePitch = byteSize;
+
+	UpdateSubresources(cmdList, defaultAllocation->GetResource(),
+		UploadAlloc->GetResource(), 0, 0, 1, &subresourceData);
+
+	tracker.TransitionBarrier(cmdList, defaultAllocation->GetResource(), initialState);
+
+	ComPtr<D3D12MA::Allocation> raiiAllocation(defaultAllocation);
+	return raiiAllocation;
+}
+
 #ifndef ThrowIfFailed
 #define ThrowIfFailed(f)												\
 {																		\
@@ -155,3 +231,53 @@ public:
 	wstring mFileName;
 	int mLineNumber = -1;
 };
+
+
+namespace Matrix4x4
+{
+	inline XMFLOAT4X4 Identity4x4()
+	{
+		XMFLOAT4X4 ret;
+		XMStoreFloat4x4(&ret, XMMatrixIdentity());
+		return ret;
+	}
+
+	inline XMFLOAT4X4 Transpose(const XMFLOAT4X4& mat)
+	{
+		XMFLOAT4X4 ret;
+		XMStoreFloat4x4(&ret, XMMatrixTranspose(XMLoadFloat4x4(&mat)));
+		return ret;
+	}
+
+	inline XMFLOAT4X4 Multiply(const XMFLOAT4X4& mat1, const XMFLOAT4X4& mat2)
+	{
+		XMFLOAT4X4 ret;
+		XMStoreFloat4x4(&ret, XMMatrixMultiply(XMLoadFloat4x4(&mat1), XMLoadFloat4x4(&mat2)));
+		return ret;
+	}
+
+	inline XMFLOAT4X4 Multiply(const FXMMATRIX& mat1, const XMFLOAT4X4& mat2)
+	{
+		XMFLOAT4X4 ret;
+		XMStoreFloat4x4(&ret, mat1 * XMLoadFloat4x4(&mat2));
+		return ret;
+	}
+
+	inline XMFLOAT4X4 Reflect(XMFLOAT4& plane)
+	{
+		XMFLOAT4X4 ret;
+		XMStoreFloat4x4(&ret, XMMatrixReflect(XMLoadFloat4(&plane)));
+		return ret;
+	}
+
+	inline XMFLOAT4X4 CalulateWorldTransform(const XMFLOAT3& position, const XMFLOAT4& quaternion, const XMFLOAT3& scale)
+	{
+		XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
+		XMMATRIX rotation = XMMatrixRotationQuaternion(XMLoadFloat4(&quaternion));
+		XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
+
+		XMFLOAT4X4 world{};
+		XMStoreFloat4x4(&world, scaling * rotation * translation);
+		return world;
+	}
+}

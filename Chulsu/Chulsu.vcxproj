@@ -154,7 +154,6 @@
     <ClCompile Include="DDSTextureLoader12.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="ResourceStateTracker.cpp" />
     <ClCompile Include="DX12Renderer.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="main.cpp" />
@@ -167,7 +166,6 @@
     <ClInclude Include="DDSTextureLoader12.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="ResourceStateTracker.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DX12Renderer.h" />
     <ClInclude Include="Framework.h" />
