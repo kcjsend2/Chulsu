@@ -157,6 +157,10 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
     mAssetMgr = make_shared<AssetManager>(mD3dDevice.Get(), 256);
     mAssetMgr->mCbvSrvUavDescriptorSize = mD3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+
+    mAssetMgr->LoadTestTriangleModel(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr->BuildAcceleerationStructure(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 }
 
 

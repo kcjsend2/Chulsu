@@ -32,12 +32,12 @@ public:
 		const D3D12_RESOURCE_STATES& resourceStates,
 		const D3D12_SRV_DIMENSION& dimension); 
 
-	void BuildAcceleerationStructure();
+	void BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker);
 
 	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes);
 
 	// We will move this function to scene class later.
-	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, uint64_t& tlasSize);
+	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize);
 
 	vector<ComPtr<D3D12MA::Allocation>>& GetBLAS() { return mBLAS; }
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
@@ -50,6 +50,7 @@ private:
 
 	vector<ComPtr<D3D12MA::Allocation>> mBLAS;
 	AccelerationStructureBuffers mTLAS;
+	UINT mTLASSize = 0;
 
 	//EVERY Texture will store here for Bindless Resources Technique.
 	ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;

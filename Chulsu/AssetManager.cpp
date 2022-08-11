@@ -148,8 +148,11 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	return newTexture;
 }
 
-void AssetManager::BuildAcceleerationStructure()
+void AssetManager::BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker)
 {
+	for(auto i = mMeshMap.begin(); i != mMeshMap.end(); ++i)
+		BuildBLAS(device, cmdList, d3dAllocator, tracker, i->second);
+	BuildTLAS(device, cmdList, d3dAllocator, tracker, mTLASSize);
 }
 
 void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes)
@@ -212,7 +215,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	mBLAS.push_back(buffers.mResult);
 }
 
-void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, uint64_t& tlasSize)
+void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize)
 {
 	// First, get the size of the TLAS buffers and create them
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
