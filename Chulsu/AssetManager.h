@@ -19,7 +19,8 @@ public:
 		D3D12MA::Allocator* d3dAllocator,
 		ResourceStateTracker& tracker,
 		const std::wstring& filePath,
-		D3D12_RESOURCE_STATES resourceStates);
+		const D3D12_RESOURCE_STATES& resourceStates,
+		const D3D12_SRV_DIMENSION& dimension);
 
 	UINT mCbvSrvUavDescriptorSize = 0;
 

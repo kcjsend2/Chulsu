@@ -102,12 +102,13 @@ D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHandle(const UINT& index)
 	return gpuStart;
 }
 
-void AssetManager::LoadTexture(ID3D12Device5* device,
+shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* d3dAllocator,
 	ResourceStateTracker& tracker,
 	const std::wstring& filePath,
-	D3D12_RESOURCE_STATES resourceStates)
+	const D3D12_RESOURCE_STATES& resourceStates,
+	const D3D12_SRV_DIMENSION& dimension)
 {
 	shared_ptr<Texture> newTexture = make_shared<Texture>();
 	newTexture->LoadTextureFromDDS(device, cmdList, d3dAllocator, tracker, filePath, resourceStates);
@@ -118,7 +119,11 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 	device->CreateShaderResourceView(newTexture->GetResource(), &newTexture->ShaderResourceView(), textureCPUHandle);
 	newTexture->SetDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
 
+	newTexture->SetDimension(dimension);
+
 	mTextures.push_back(newTexture);
 
 	mHeapCurrentIndex++;
+
+	return newTexture;
 }
