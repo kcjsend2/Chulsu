@@ -3,9 +3,9 @@
 void Mesh::InitializeMeshBuffers(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* d3dAllocator,
+	ComPtr<D3D12MA::Allocator> d3dAllocator,
 	ResourceStateTracker tracker,
-	shared_ptr<AssetManager> assetMgr,
+	AssetManager* assetMgr,
 	UINT vbStride, UINT ibStride,
 	D3D12_PRIMITIVE_TOPOLOGY topology,
 	const void* vbData, UINT vbCount,

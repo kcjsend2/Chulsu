@@ -17,7 +17,7 @@ AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
 ComPtr<D3D12MA::Allocation> AssetManager::CreateBufferResource(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* allocator,
+	ComPtr<D3D12MA::Allocator> allocator,
 	ResourceStateTracker& tracker,
 	const void* initData, UINT64 byteSize,
 	D3D12_RESOURCE_STATES initialState,
@@ -39,6 +39,7 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateBufferResource(
 		NULL,
 		&defaultAllocation,
 		IID_NULL, NULL);
+
 
 	tracker.AddTrackingResource(defaultAllocation->GetResource(), resourceState);
 
@@ -137,7 +138,7 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		}
 
 		auto mesh = make_shared<Mesh>();
-		mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, shared_ptr<AssetManager>(this), sizeof(Vertex), sizeof(UINT),
+		mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, this, sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
 		meshes.push_back(mesh);
 	}
@@ -145,7 +146,7 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	mMeshMap[path] = meshes;
 }
 
-void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* allocator, ResourceStateTracker& tracker)
+void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker& tracker)
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
@@ -155,7 +156,7 @@ void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCo
 	const Vertex vertices[] = { v1, v2, v3 };
 
 	auto mesh = make_shared<Mesh>();
-	mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, shared_ptr<AssetManager>(this), sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
 
 	std::vector<shared_ptr<Mesh>> meshes;
 	meshes.push_back(mesh);
@@ -207,14 +208,14 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	return newTexture;
 }
 
-void AssetManager::BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker)
+void AssetManager::BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker)
 {
 	for(auto i = mMeshMap.begin(); i != mMeshMap.end(); ++i)
 		BuildBLAS(device, cmdList, d3dAllocator, tracker, i->second);
 	BuildTLAS(device, cmdList, d3dAllocator, tracker, mTLASSize);
 }
 
-void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes)
+void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes)
 {
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescs;
 	geomDescs.reserve(mMeshMap.size());
@@ -274,7 +275,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	mBLAS.push_back(buffers.mResult);
 }
 
-void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize)
+void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize)
 {
 	// First, get the size of the TLAS buffers and create them
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};

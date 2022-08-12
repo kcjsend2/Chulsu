@@ -20,7 +20,7 @@ public:
 
 	ComPtr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
-		D3D12MA::Allocator* allocator,
+		ComPtr<D3D12MA::Allocator> allocator,
 		ResourceStateTracker& tracker, const void* initData, UINT64 byteSize,
 		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 
@@ -28,7 +28,7 @@ public:
 		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path);
 
 	void LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker);
+		ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker& tracker);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHandle(const UINT& index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetIndexedGPUHandle(const UINT& index);
@@ -41,12 +41,12 @@ public:
 		const D3D12_RESOURCE_STATES& resourceStates,
 		const D3D12_SRV_DIMENSION& dimension); 
 
-	void BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker);
+	void BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker);
 
-	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes);
+	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes);
 
 	// We will move this function to scene class later.
-	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize);
+	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize);
 
 	void PushUploadBuffer(ComPtr<D3D12MA::Allocation> alloc) { mUploadBuffers.push_back(alloc); }
 	void FreeUploadBuffers() { mUploadBuffers.clear(); }
