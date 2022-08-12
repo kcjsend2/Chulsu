@@ -48,7 +48,7 @@
 #include <filesystem>
 #include <span>
 
-#include "dxcapi.h" 
+#include "dxc/Support/dxcapi.use.h"
 #include <d3dcompiler.h>
 
 #include <assimp/Importer.hpp>
@@ -64,6 +64,8 @@ using namespace DirectX;
 using namespace DirectX::PackedVector;
 
 using Microsoft::WRL::ComPtr;
+
+static dxc::DxcDllSupport gDxcDllSupport;
 
 extern int gFrameWidth;
 extern int gFrameHeight;
@@ -126,6 +128,16 @@ inline string wstringTostring(const wstring& ws)
 	string s = cvt.to_bytes(ws);
 	return s;
 }
+
+template<class BlotType>
+inline std::string ConvertBlobToString(BlotType* pBlob)
+{
+	std::vector<char> infoLog(pBlob->GetBufferSize() + 1);
+	memcpy(infoLog.data(), pBlob->GetBufferPointer(), pBlob->GetBufferSize());
+	infoLog[pBlob->GetBufferSize()] = 0;
+	return std::string(infoLog.data());
+}
+
 
 inline void ReportLiveObjects()
 {

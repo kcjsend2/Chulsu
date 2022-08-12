@@ -73,19 +73,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -157,6 +157,8 @@
     <ClCompile Include="DX12Renderer.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Textrue.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
@@ -169,7 +171,9 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DX12Renderer.h" />
     <ClInclude Include="Framework.h" />
+    <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
