@@ -85,7 +85,7 @@ ComPtr<ID3D12CommandQueue> DX12Renderer::CreateCommandQueue(ComPtr<ID3D12Device5
     return pQueue;
 }
 
-ComPtr<ID3D12DescriptorHeap> DX12Renderer::CreateDescriptorHeap(ComPtr<ID3D12Device5> pDevice, uint32_t count, D3D12_DESCRIPTOR_HEAP_TYPE type, bool shaderVisible)
+ComPtr<ID3D12DescriptorHeap> DX12Renderer::CreateSwapchainDescriptorHeap(ComPtr<ID3D12Device5> pDevice, uint32_t count, D3D12_DESCRIPTOR_HEAP_TYPE type, bool shaderVisible)
 {
     D3D12_DESCRIPTOR_HEAP_DESC desc = {};
     desc.NumDescriptors = count;
@@ -97,7 +97,7 @@ ComPtr<ID3D12DescriptorHeap> DX12Renderer::CreateDescriptorHeap(ComPtr<ID3D12Dev
     return pHeap;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DX12Renderer::CreateRTV(ComPtr<ID3D12Device5> pDevice, ComPtr<ID3D12Resource> pResource, ComPtr<ID3D12DescriptorHeap> pHeap, uint32_t& usedHeapEntries, DXGI_FORMAT format)
+D3D12_CPU_DESCRIPTOR_HANDLE DX12Renderer::CreateSwapchainRTV(ComPtr<ID3D12Device5> pDevice, ComPtr<ID3D12Resource> pResource, ComPtr<ID3D12DescriptorHeap> pHeap, uint32_t& usedHeapEntries, DXGI_FORMAT format)
 {
     D3D12_RENDER_TARGET_VIEW_DESC desc = {};
     desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
@@ -134,14 +134,14 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mSwapChain = CreateDxgiSwapChain(pDxgiFactory, mWinHandle, winWidth, winHeight, DXGI_FORMAT_R8G8B8A8_UNORM, mCmdQueue);
 
     // Create a RTV descriptor heap
-    mRtvHeap.pHeap = CreateDescriptorHeap(mDevice, mRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
+    mRtvHeap.pHeap = CreateSwapchainDescriptorHeap(mDevice, mRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
 
     // Create the per-frame objects
     for (uint32_t i = 0; i < mSwapChainBufferCount; i++)
     {
         mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrameObjects[i].pCommandAllocator));
         mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrameObjects[i].pSwapChainBuffer));
-        mFrameObjects[i].rtvHandle = CreateRTV(mDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
+        mFrameObjects[i].rtvHandle = CreateSwapchainRTV(mDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
     }
 
     mResourceTracker.AddTrackingResource(mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
