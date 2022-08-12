@@ -73,19 +73,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ExternalIncludePath>$(ProjectDir)\ThirdParty\dxc;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ProjectDir)\ThirdParty;$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>$(ProjectDir)\ThirdParty\dxc\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -158,7 +158,6 @@
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Pipeline.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Textrue.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
