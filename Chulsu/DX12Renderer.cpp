@@ -196,13 +196,13 @@ void DX12Renderer::BuildObjects()
     Pipeline pipeline;
     pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
 
-    mOutputTexture = mAssetMgr->CreateBufferResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
+    mOutputResource = mAssetMgr->CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
         D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    mAssetMgr->SetTexture(mDevice.Get(), mCmdList.Get(), mOutputTexture, 
-        L"OutputTexture", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
+    mAssetMgr->SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource, 
+        L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
 }
 
 void DX12Renderer::WaitUntilGPUComplete()

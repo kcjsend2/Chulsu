@@ -21,8 +21,8 @@ private:
 	ComPtr<IDXGISwapChain3> CreateDxgiSwapChain(ComPtr<IDXGIFactory4> pFactory, HWND hwnd, uint32_t width, uint32_t height, DXGI_FORMAT format, ComPtr<ID3D12CommandQueue> pCommandQueue);
 	ComPtr<ID3D12Device5> CreateDevice(ComPtr<IDXGIFactory4> pDxgiFactory);
 	ComPtr<ID3D12CommandQueue> CreateCommandQueue(ComPtr<ID3D12Device5> pDevice);
-	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(ComPtr<ID3D12Device5> pDevice, uint32_t count, D3D12_DESCRIPTOR_HEAP_TYPE type, bool shaderVisible);
-	D3D12_CPU_DESCRIPTOR_HANDLE CreateRTV(ComPtr<ID3D12Device5> pDevice, ComPtr<ID3D12Resource> pResource, ComPtr<ID3D12DescriptorHeap> pHeap, uint32_t& usedHeapEntries, DXGI_FORMAT format);
+	ComPtr<ID3D12DescriptorHeap> CreateSwapchainDescriptorHeap(ComPtr<ID3D12Device5> pDevice, uint32_t count, D3D12_DESCRIPTOR_HEAP_TYPE type, bool shaderVisible);
+	D3D12_CPU_DESCRIPTOR_HANDLE CreateSwapchainRTV(ComPtr<ID3D12Device5> pDevice, ComPtr<ID3D12Resource> pResource, ComPtr<ID3D12DescriptorHeap> pHeap, uint32_t& usedHeapEntries, DXGI_FORMAT format);
 
 	UINT mCurrBackBufferIndex = 0;
 	const UINT mRtvHeapSize = 2;
@@ -61,5 +61,5 @@ private:
 
 	unordered_map<string, Pipeline> mPipelines;
 
-	ComPtr<D3D12MA::Allocation> mOutputTexture;
+	ComPtr<D3D12MA::Allocation> mOutputResource;
 };

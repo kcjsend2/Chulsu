@@ -16,7 +16,7 @@ void Mesh::InitializeMeshBuffers(
 	const UINT vbByteSize = vbCount * vbStride;
 
 	mVertexBufferAlloc =
-		assetMgr->CreateBufferResource(device, cmdList, d3dAllocator, tracker, vbData, vbByteSize, 1,
+		assetMgr->CreateResource(device, cmdList, d3dAllocator, tracker, vbData, vbByteSize, 1,
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
 	mVertexBufferView.BufferLocation = mVertexBufferAlloc->GetResource()->GetGPUVirtualAddress();
@@ -33,7 +33,7 @@ void Mesh::InitializeMeshBuffers(
 
 		const UINT ibByteSize = ibCount * ibStride;
 
-		mIndexBufferAlloc = assetMgr->CreateBufferResource(device, cmdList, d3dAllocator, tracker, ibData, ibByteSize, 1,
+		mIndexBufferAlloc = assetMgr->CreateResource(device, cmdList, d3dAllocator, tracker, ibData, ibByteSize, 1,
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
 		mIndexBufferView.BufferLocation = mIndexBufferAlloc->GetResource()->GetGPUVirtualAddress();

@@ -18,7 +18,7 @@ public:
 	AssetManager(ID3D12Device* device, int numDescriptor);
 
 
-	ComPtr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device5* device,
+	ComPtr<D3D12MA::Allocation> CreateResource(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
 		ComPtr<D3D12MA::Allocator> allocator,
 		ResourceStateTracker& tracker, const void* initData, UINT64 width, UINT64 height,

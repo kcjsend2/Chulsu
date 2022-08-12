@@ -14,7 +14,7 @@ AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
 		IID_PPV_ARGS(&mSRVUAVDescriptorHeap)));
 }
 
-ComPtr<D3D12MA::Allocation> AssetManager::CreateBufferResource(
+ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
 	ComPtr<D3D12MA::Allocator> allocator,
@@ -313,9 +313,9 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
 	AccelerationStructureBuffers buffers;
-	buffers.mScratch = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
+	buffers.mScratch = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	buffers.mResult = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
+	buffers.mResult = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
 	// Create the bottom-level AS
@@ -349,14 +349,14 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	// Create the buffers
 	AccelerationStructureBuffers buffers;
-	buffers.mScratch = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
+	buffers.mScratch = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	buffers.mResult = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
+	buffers.mResult = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	tlasSize = info.ResultDataMaxSizeInBytes;
 
 	// The instance desc should be inside a buffer, create and map the buffer
-	buffers.mInstanceDesc = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mBLAS.size(), 1,
+	buffers.mInstanceDesc = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mBLAS.size(), 1,
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
