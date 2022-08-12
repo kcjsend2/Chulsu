@@ -272,7 +272,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	uavBarrier.UAV.pResource = buffers.mResult->GetResource();
 	cmdList->ResourceBarrier(1, &uavBarrier);
 
-	mBLAS.push_back(buffers.mResult);
+	mBLAS.push_back(buffers);
 }
 
 void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize)
@@ -314,7 +314,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
-		instanceDescs[i].AccelerationStructure = mBLAS[i]->GetResource()->GetGPUVirtualAddress();
+		instanceDescs[i].AccelerationStructure = mBLAS[i].mResult->GetResource()->GetGPUVirtualAddress();
 		instanceDescs[i].InstanceMask = 0xFF;
 	}
 

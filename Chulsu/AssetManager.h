@@ -51,7 +51,7 @@ public:
 	void PushUploadBuffer(ComPtr<D3D12MA::Allocation> alloc) { mUploadBuffers.push_back(alloc); }
 	void FreeUploadBuffers() { mUploadBuffers.clear(); }
 
-	vector<ComPtr<D3D12MA::Allocation>>& GetBLAS() { return mBLAS; }
+	vector<AccelerationStructureBuffers>& GetBLAS() { return mBLAS; }
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
 
 	UINT mCbvSrvUavDescriptorSize = 0;
@@ -60,7 +60,7 @@ private:
 	unordered_map<string, vector<shared_ptr<Mesh>>> mMeshMap;
 	unordered_map<wstring, shared_ptr<Texture>> mTextures;
 
-	vector<ComPtr<D3D12MA::Allocation>> mBLAS;
+	vector<AccelerationStructureBuffers> mBLAS;
 	AccelerationStructureBuffers mTLAS;
 	UINT mTLASSize = 0;
 
