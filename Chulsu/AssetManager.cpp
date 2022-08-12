@@ -21,14 +21,17 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateBufferResource(
 	ResourceStateTracker& tracker,
 	const void* initData, UINT64 width, UINT64 height,
 	D3D12_RESOURCE_STATES initialState,
+	D3D12_RESOURCE_DIMENSION dimension,
+	DXGI_FORMAT format,
+	D3D12_TEXTURE_LAYOUT layout,
 	D3D12_RESOURCE_FLAGS flag,
 	D3D12_HEAP_TYPE heapType)
 {
 	D3D12MA::ALLOCATION_DESC allocationDesc = {};
 	allocationDesc.HeapType = heapType;
 
-	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-		width, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flag);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(dimension, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+		width, 1, 1, 1, format, 1, 0, layout, flag);
 
 	auto resourceState = initData != NULL ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
 	ComPtr<D3D12MA::Allocation> defaultAllocation;
@@ -252,7 +255,7 @@ void AssetManager::SetTexture(ID3D12Device5* device,
 	if (isUAV)
 	{
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uav = {};
-		uav.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		uav.ViewDimension = uavDimension;
 		device->CreateUnorderedAccessView(newTexture->GetResource(), nullptr, &uav, textureCPUHandle);
 		newTexture->SetUAVDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
 
@@ -311,9 +314,9 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
 	AccelerationStructureBuffers buffers;
 	buffers.mScratch = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	buffers.mResult = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
-		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
 	// Create the bottom-level AS
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
@@ -347,14 +350,14 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	// Create the buffers
 	AccelerationStructureBuffers buffers;
 	buffers.mScratch = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	buffers.mResult = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
-		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	tlasSize = info.ResultDataMaxSizeInBytes;
 
 	// The instance desc should be inside a buffer, create and map the buffer
 	buffers.mInstanceDesc = CreateBufferResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mBLAS.size(), 1,
-		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
+		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
 	buffers.mInstanceDesc->GetResource()->Map(0, nullptr, (void**)&instanceDescs);

@@ -58,5 +58,5 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
     desc.pSubobjects = subobjects.data();
     desc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
-    device->CreateStateObject(&desc, IID_PPV_ARGS(&mPipelineState));
+    ThrowIfFailed(device->CreateStateObject(&desc, IID_PPV_ARGS(&mPipelineState)));
 }

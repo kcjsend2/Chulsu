@@ -30,6 +30,7 @@ void Framework::Run()
 
     mRenderer = make_shared<DX12Renderer>();
     mRenderer->Init(mWinHandle, mWidth, mHeight);
+    mRenderer->BuildObjects();
 
     MsgLoop();
 

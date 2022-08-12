@@ -87,12 +87,12 @@ namespace SubObject
     ComPtr<IDxcBlob> CompileLibrary(const WCHAR* filename, const WCHAR* targetString)
     {
         // Initialize the helper
-        gDxcDllSupport.Initialize();
+        ThrowIfFailed(gDxcDllSupport.Initialize());
         IDxcCompiler* compiler;
         IDxcLibrary* library;
 
-        gDxcDllSupport.CreateInstance(CLSID_DxcCompiler, &compiler);
-        gDxcDllSupport.CreateInstance(CLSID_DxcLibrary, &library);
+        ThrowIfFailed(gDxcDllSupport.CreateInstance(CLSID_DxcCompiler, &compiler));
+        ThrowIfFailed(gDxcDllSupport.CreateInstance(CLSID_DxcLibrary, &library));
 
         // Open and read the file
         std::ifstream shaderFile(filename);
@@ -106,7 +106,7 @@ namespace SubObject
 
         // Create blob from the string
         ComPtr<IDxcBlobEncoding> textBlob;
-        library->CreateBlobWithEncodingFromPinned((LPBYTE)shader.c_str(), (uint32_t)shader.size(), 0, &textBlob);
+        ThrowIfFailed(library->CreateBlobWithEncodingFromPinned((LPBYTE)shader.c_str(), (uint32_t)shader.size(), 0, &textBlob));
 
         // Compile
         ComPtr<IDxcOperationResult> result;

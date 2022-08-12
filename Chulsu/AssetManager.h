@@ -22,7 +22,8 @@ public:
 		ID3D12GraphicsCommandList4* cmdList,
 		ComPtr<D3D12MA::Allocator> allocator,
 		ResourceStateTracker& tracker, const void* initData, UINT64 width, UINT64 height,
-		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
+		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_DIMENSION dimension,
+		DXGI_FORMAT format, D3D12_TEXTURE_LAYOUT layout, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 
 	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path);

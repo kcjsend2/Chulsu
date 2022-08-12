@@ -48,7 +48,7 @@
 #include <filesystem>
 #include <span>
 
-#include "dxc/Support/dxcapi.use.h"
+#include "dxc/dxcapi.use.h"
 #include <d3dcompiler.h>
 
 #include <assimp/Importer.hpp>

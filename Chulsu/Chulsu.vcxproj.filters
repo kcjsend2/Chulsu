@@ -16,7 +16,7 @@
     <Filter Include="소스 파일\Core">
       <UniqueIdentifier>{73015a19-f94a-45aa-a81b-adc15d09e8a3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader">
+    <Filter Include="Shaders">
       <UniqueIdentifier>{1adc424d-e02a-4602-bbb5-d0b1ba5b360f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -104,7 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\DefaultRayTrace.hlsl">
-      <Filter>Shader</Filter>
+      <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>
