@@ -53,7 +53,7 @@ private:
 	{
 		ComPtr<ID3D12CommandAllocator> pCommandAllocator;
 		ComPtr<ID3D12Resource> pSwapChainBuffer;
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = {};
 	};
 	FrameObject mFrameObjects[mSwapChainBufferCount];
 
