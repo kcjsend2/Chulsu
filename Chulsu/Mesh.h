@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include "AssetManager.h"
 
 struct Vertex
 {
@@ -18,7 +19,8 @@ public:
 	virtual ~Mesh() {}
 
 	void InitializeMeshBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		D3D12MA::Allocator* allocator, ResourceStateTracker tracker, UINT vbStride, UINT ibStride, D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
+		D3D12MA::Allocator* allocator, ResourceStateTracker tracker, shared_ptr<AssetManager> assetMgr, UINT vbStride, UINT ibStride,
+		D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
 
 	UINT GetVertexCount() { return mVerticesCount; }
 	UINT GetIndexCount() { return mIndexCount; }

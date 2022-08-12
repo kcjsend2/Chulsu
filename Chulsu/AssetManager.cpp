@@ -1,6 +1,7 @@
 #include "AssetManager.h"
+#include "Mesh.h"
 
-void AssetManager::Init(ID3D12Device* device, int numDescriptor)
+AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
 {
 	auto descHeapDescriptor = DescriptorHeapDesc(
 		numDescriptor,
@@ -11,6 +12,64 @@ void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 	ThrowIfFailed(device->CreateDescriptorHeap(
 		&descHeapDescriptor,
 		IID_PPV_ARGS(&mSRVUAVDescriptorHeap)));
+}
+
+ComPtr<D3D12MA::Allocation> AssetManager::CreateBufferResource(
+	ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
+	D3D12MA::Allocator* allocator,
+	ResourceStateTracker& tracker,
+	const void* initData, UINT64 byteSize,
+	D3D12_RESOURCE_STATES initialState,
+	D3D12_RESOURCE_FLAGS flag,
+	D3D12_HEAP_TYPE heapType)
+{
+	D3D12MA::ALLOCATION_DESC allocationDesc = {};
+	allocationDesc.HeapType = heapType;
+
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+		byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flag);
+
+	auto resourceState = initData != NULL ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
+	ComPtr<D3D12MA::Allocation> defaultAllocation;
+	allocator->CreateResource(
+		&allocationDesc,
+		&resourceDesc,
+		resourceState,
+		NULL,
+		&defaultAllocation,
+		IID_NULL, NULL);
+
+	tracker.AddTrackingResource(defaultAllocation->GetResource(), resourceState);
+
+	if (initData != NULL)
+	{
+		ComPtr<D3D12MA::Allocation> UploadAlloc = nullptr;
+
+		allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
+		allocator->CreateResource(
+			&allocationDesc,
+			&resourceDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			NULL,
+			&UploadAlloc,
+			IID_NULL, NULL);
+
+		//UploadAlloc->GetResource()->SetName(L"Upload Buffer");
+
+		D3D12_SUBRESOURCE_DATA subresourceData = {};
+		subresourceData.pData = initData;
+		subresourceData.RowPitch = byteSize;
+		subresourceData.SlicePitch = byteSize;
+
+		UpdateSubresources(cmdList, defaultAllocation->GetResource(),
+			UploadAlloc->GetResource(), 0, 0, 1, &subresourceData);
+
+		tracker.TransitionBarrier(cmdList, defaultAllocation->GetResource(), initialState);
+		PushUploadBuffer(UploadAlloc);
+	}
+
+	return defaultAllocation;
 }
 
 void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
@@ -78,7 +137,7 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		}
 
 		auto mesh = make_shared<Mesh>();
-		mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, sizeof(Vertex), sizeof(UINT),
+		mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, shared_ptr<AssetManager>(this), sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
 		meshes.push_back(mesh);
 	}
@@ -96,7 +155,7 @@ void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCo
 	const Vertex vertices[] = { v1, v2, v3 };
 
 	auto mesh = make_shared<Mesh>();
-	mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, shared_ptr<AssetManager>(this), sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
 
 	std::vector<shared_ptr<Mesh>> meshes;
 	meshes.push_back(mesh);

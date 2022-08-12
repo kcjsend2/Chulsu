@@ -52,4 +52,6 @@ private:
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle;
 	};
 	FrameObject mFrameObjects[mSwapChainBufferCount];
+
+	shared_ptr<AssetManager> mAssetMgr = NULL;
 };

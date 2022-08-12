@@ -1,7 +1,9 @@
 #pragma once
 #include "stdafx.h"
-#include "Mesh.h"
 #include "Texture.h"
+
+class Mesh;
+struct Vertex;
 
 struct AccelerationStructureBuffers
 {
@@ -13,9 +15,14 @@ struct AccelerationStructureBuffers
 class AssetManager
 {
 public:
-	AssetManager() {}
+	AssetManager(ID3D12Device* device, int numDescriptor);
 
-	void Init(ID3D12Device* device, int numDescriptor);
+
+	ComPtr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device5* device,
+		ID3D12GraphicsCommandList4* cmdList,
+		D3D12MA::Allocator* allocator,
+		ResourceStateTracker& tracker, const void* initData, UINT64 byteSize,
+		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 
 	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path);

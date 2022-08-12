@@ -58,15 +58,12 @@
 #include "DirectXTex.h"
 #include "D3D12MemAlloc.h"
 #include "DDSTextureLoader12.h"
-#include "AssetManager.h"
 
 using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
 using Microsoft::WRL::ComPtr;
-
-static AssetManager gAssetMgr;
 
 static dxc::DxcDllSupport gDxcDllSupport;
 
@@ -163,64 +160,6 @@ inline D3D12_DESCRIPTOR_HEAP_DESC DescriptorHeapDesc(
 	descriptorHeapDesc.Flags = descriptorFlags;
 	descriptorHeapDesc.NodeMask = 0;
 	return descriptorHeapDesc;
-}
-
-inline ComPtr<D3D12MA::Allocation> CreateBufferResource(
-	ID3D12Device5* device,
-	ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* allocator,
-	ResourceStateTracker& tracker,
-	const void* initData, UINT64 byteSize,
-	D3D12_RESOURCE_STATES initialState,
-	D3D12_RESOURCE_FLAGS flag,
-	D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT)
-{
-	D3D12MA::ALLOCATION_DESC allocationDesc = {};
-	allocationDesc.HeapType = heapType;
-
-	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-		byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flag);
-
-	auto resourceState = initData != NULL ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
-	ComPtr<D3D12MA::Allocation> defaultAllocation;
-	allocator->CreateResource(
-		&allocationDesc,
-		&resourceDesc,
-		resourceState,
-		NULL,
-		&defaultAllocation,
-		IID_NULL, NULL);
-
-	tracker.AddTrackingResource(defaultAllocation->GetResource(), resourceState);
-
-	if (initData != NULL)
-	{
-		ComPtr<D3D12MA::Allocation> UploadAlloc = nullptr;
-
-		allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-		allocator->CreateResource(
-			&allocationDesc,
-			&resourceDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			NULL,
-			&UploadAlloc,
-			IID_NULL, NULL);
-
-		//UploadAlloc->GetResource()->SetName(L"Upload Buffer");
-
-		D3D12_SUBRESOURCE_DATA subresourceData = {};
-		subresourceData.pData = initData;
-		subresourceData.RowPitch = byteSize;
-		subresourceData.SlicePitch = byteSize;
-
-		UpdateSubresources(cmdList, defaultAllocation->GetResource(),
-			UploadAlloc->GetResource(), 0, 0, 1, &subresourceData);
-		
-		tracker.TransitionBarrier(cmdList, defaultAllocation->GetResource(), initialState);
-		gAssetMgr.PushUploadBuffer(UploadAlloc);
-	}
-
-	return defaultAllocation;
 }
 
 #ifndef ThrowIfFailed
