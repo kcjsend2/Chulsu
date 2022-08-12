@@ -45,7 +45,7 @@ namespace SubObject
 
     struct DxilLibrary
     {
-        DxilLibrary(ComPtr<ID3DBlob> pBlob, const WCHAR* entryPoint[], uint32_t entryPointCount) : pShaderBlob(pBlob)
+        DxilLibrary(ComPtr<IDxcBlob> pBlob, const WCHAR* entryPoint[], uint32_t entryPointCount) : pShaderBlob(pBlob)
         {
             stateSubobject.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
             stateSubobject.pDesc = &dxilLibDesc;
@@ -74,7 +74,7 @@ namespace SubObject
 
         D3D12_DXIL_LIBRARY_DESC dxilLibDesc = {};
         D3D12_STATE_SUBOBJECT stateSubobject{};
-        ComPtr<ID3DBlob> pShaderBlob;
+        ComPtr<IDxcBlob> pShaderBlob;
         std::vector<D3D12_EXPORT_DESC> exportDesc;
         std::vector<std::wstring> exportName;
     };
@@ -84,7 +84,7 @@ namespace SubObject
     static const WCHAR* kClosestHitShader = L"chs";
     static const WCHAR* kHitGroup = L"HitGroup";
 
-    ComPtr<ID3DBlob> CompileLibrary(const WCHAR* filename, const WCHAR* targetString)
+    ComPtr<IDxcBlob> CompileLibrary(const WCHAR* filename, const WCHAR* targetString)
     {
         // Initialize the helper
         gDxcDllSupport.Initialize();
@@ -129,14 +129,13 @@ namespace SubObject
         ComPtr<IDxcBlob> blob;
         result->GetResult(&blob);
 
-        ComPtr<ID3DBlob> d3dBlob = blob.Get();
-        return d3dBlob;
+        return blob;
     }
 
     DxilLibrary CreateDxilLibrary(const WCHAR* filename)
     {
         // Compile the shader
-        ComPtr<ID3DBlob> pDxilLib = CompileLibrary(filename, L"lib_6_6");
+        ComPtr<IDxcBlob> pDxilLib = CompileLibrary(filename, L"lib_6_6");
         const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
         return DxilLibrary(pDxilLib, entryPoints, arraysize(entryPoints));
     }

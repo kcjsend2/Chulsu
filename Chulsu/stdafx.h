@@ -58,12 +58,15 @@
 #include "DirectXTex.h"
 #include "D3D12MemAlloc.h"
 #include "DDSTextureLoader12.h"
+#include "AssetManager.h"
 
 using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
 using Microsoft::WRL::ComPtr;
+
+static AssetManager gAssetMgr;
 
 static dxc::DxcDllSupport gDxcDllSupport;
 
@@ -172,16 +175,14 @@ inline ComPtr<D3D12MA::Allocation> CreateBufferResource(
 	D3D12_RESOURCE_FLAGS flag,
 	D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT)
 {
-	D3D12MA::Allocation* UploadAlloc = nullptr;
-
 	D3D12MA::ALLOCATION_DESC allocationDesc = {};
 	allocationDesc.HeapType = heapType;
 
 	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-		byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+		byteSize, 1, 1, 1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, flag);
 
 	auto resourceState = initData != NULL ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
-	D3D12MA::Allocation* defaultAllocation;
+	ComPtr<D3D12MA::Allocation> defaultAllocation;
 	allocator->CreateResource(
 		&allocationDesc,
 		&resourceDesc,
@@ -194,6 +195,8 @@ inline ComPtr<D3D12MA::Allocation> CreateBufferResource(
 
 	if (initData != NULL)
 	{
+		ComPtr<D3D12MA::Allocation> UploadAlloc = nullptr;
+
 		allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
 		allocator->CreateResource(
 			&allocationDesc,
@@ -203,6 +206,7 @@ inline ComPtr<D3D12MA::Allocation> CreateBufferResource(
 			&UploadAlloc,
 			IID_NULL, NULL);
 
+		//UploadAlloc->GetResource()->SetName(L"Upload Buffer");
 
 		D3D12_SUBRESOURCE_DATA subresourceData = {};
 		subresourceData.pData = initData;
@@ -211,12 +215,12 @@ inline ComPtr<D3D12MA::Allocation> CreateBufferResource(
 
 		UpdateSubresources(cmdList, defaultAllocation->GetResource(),
 			UploadAlloc->GetResource(), 0, 0, 1, &subresourceData);
-
+		
 		tracker.TransitionBarrier(cmdList, defaultAllocation->GetResource(), initialState);
+		gAssetMgr.PushUploadBuffer(UploadAlloc);
 	}
 
-	ComPtr<D3D12MA::Allocation> raiiAllocation(defaultAllocation);
-	return raiiAllocation;
+	return defaultAllocation;
 }
 
 #ifndef ThrowIfFailed

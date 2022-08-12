@@ -6,6 +6,8 @@ public:
 	Texture() = default;
 	virtual ~Texture() { }
 
+	void SetResource(ComPtr<D3D12MA::Allocation> alloc) { mTextureBufferAlloc = alloc; };
+
 	void LoadTextureFromDDS(
 		ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,

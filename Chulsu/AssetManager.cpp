@@ -1,6 +1,6 @@
 #include "AssetManager.h"
 
-AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
+void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 {
 	auto descHeapDescriptor = DescriptorHeapDesc(
 		numDescriptor,
@@ -162,7 +162,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	for (auto i = meshes.begin(); i != meshes.end(); ++i)
 	{
-		D3D12_RAYTRACING_GEOMETRY_DESC geomDesc;
+		D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
 		geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 		geomDesc.Triangles.VertexBuffer.StartAddress = (*i)->GetVertexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
 		geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
@@ -221,7 +221,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
 	inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-	inputs.NumDescs = 3;
+	inputs.NumDescs = mBLAS.size();
 	inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;

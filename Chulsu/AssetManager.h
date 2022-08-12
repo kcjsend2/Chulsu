@@ -13,7 +13,9 @@ struct AccelerationStructureBuffers
 class AssetManager
 {
 public:
-	AssetManager(ID3D12Device* device, int numDescriptor);
+	AssetManager() {}
+
+	void Init(ID3D12Device* device, int numDescriptor);
 
 	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path);
@@ -39,6 +41,9 @@ public:
 	// We will move this function to scene class later.
 	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize);
 
+	void PushUploadBuffer(ComPtr<D3D12MA::Allocation> alloc) { mUploadBuffers.push_back(alloc); }
+	void FreeUploadBuffers() { mUploadBuffers.clear(); }
+
 	vector<ComPtr<D3D12MA::Allocation>>& GetBLAS() { return mBLAS; }
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
 
@@ -53,6 +58,8 @@ private:
 	UINT mTLASSize = 0;
 
 	ComPtr<D3D12MA::Allocation> mOutputTexture;
+
+	vector<ComPtr<D3D12MA::Allocation>> mUploadBuffers;
 
 	//EVERY Texture will store here for Bindless Resources Technique.
 	ComPtr<ID3D12DescriptorHeap> mSRVUAVDescriptorHeap;

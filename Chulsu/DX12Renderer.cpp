@@ -154,13 +154,11 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mD3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
+    gAssetMgr.Init(mD3dDevice.Get(), 256);
+    gAssetMgr.mCbvSrvUavDescriptorSize = mD3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    mAssetMgr = make_shared<AssetManager>(mD3dDevice.Get(), 256);
-    mAssetMgr->mCbvSrvUavDescriptorSize = mD3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-
-    mAssetMgr->LoadTestTriangleModel(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
-    mAssetMgr->BuildAcceleerationStructure(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    gAssetMgr.LoadTestTriangleModel(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    gAssetMgr.BuildAcceleerationStructure(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 }
 
 
@@ -189,6 +187,8 @@ void DX12Renderer::Draw()
 
     mFrameObjects[bufferIndex].pCommandAllocator->Reset();
     mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);
+
+    gAssetMgr.FreeUploadBuffers();
 }
 
 void DX12Renderer::WaitUntilGPUComplete()
