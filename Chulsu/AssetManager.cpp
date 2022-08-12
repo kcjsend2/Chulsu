@@ -10,7 +10,7 @@ AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
 
 	ThrowIfFailed(device->CreateDescriptorHeap(
 		&descHeapDescriptor,
-		IID_PPV_ARGS(&mDescriptorHeap)));
+		IID_PPV_ARGS(&mSRVUAVDescriptorHeap)));
 }
 
 void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
@@ -105,7 +105,7 @@ void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCo
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
 {
-	auto cpuStart = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	auto cpuStart = mSRVUAVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	cpuStart.ptr += mCbvSrvUavDescriptorSize * index;
 
@@ -114,7 +114,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
 
 D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHandle(const UINT& index)
 {
-	auto gpuStart = mDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	auto gpuStart = mSRVUAVDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
 	gpuStart.ptr += mCbvSrvUavDescriptorSize * index;
 
@@ -141,7 +141,7 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 
 	newTexture->SetDimension(dimension);
 
-	mTextures.push_back(newTexture);
+	mTextures[filePath] = newTexture;
 
 	mHeapCurrentIndex++;
 
@@ -277,4 +277,13 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	cmdList->ResourceBarrier(1, &uavBarrier);
 
 	mTLAS = buffers;
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.RaytracingAccelerationStructure.Location = mTLAS.mResult->GetResource()->GetGPUVirtualAddress();
+
+	//Currently just do this...
+	device->CreateShaderResourceView(nullptr, &srvDesc, GetIndexedCPUHandle(mHeapCurrentIndex));
+	mHeapCurrentIndex++;
 }

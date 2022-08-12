@@ -46,13 +46,15 @@ public:
 
 private:
 	unordered_map<string, vector<shared_ptr<Mesh>>> mMeshMap;
-	vector<shared_ptr<Texture>> mTextures;
+	unordered_map<wstring, shared_ptr<Texture>> mTextures;
 
 	vector<ComPtr<D3D12MA::Allocation>> mBLAS;
 	AccelerationStructureBuffers mTLAS;
 	UINT mTLASSize = 0;
 
+	ComPtr<D3D12MA::Allocation> mOutputTexture;
+
 	//EVERY Texture will store here for Bindless Resources Technique.
-	ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
+	ComPtr<ID3D12DescriptorHeap> mSRVUAVDescriptorHeap;
 	UINT mHeapCurrentIndex = 0;
 };
