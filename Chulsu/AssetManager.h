@@ -21,7 +21,7 @@ public:
 	ComPtr<D3D12MA::Allocation> CreateBufferResource(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
 		ComPtr<D3D12MA::Allocator> allocator,
-		ResourceStateTracker& tracker, const void* initData, UINT64 byteSize,
+		ResourceStateTracker& tracker, const void* initData, UINT64 width, UINT64 height,
 		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 
 	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
@@ -41,7 +41,7 @@ public:
 		const D3D12_RESOURCE_STATES& resourceStates,
 		const D3D12_SRV_DIMENSION& dimension); 
 
-	void BuildAcceleerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker);
+	void BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker);
 
 	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes);
 
@@ -63,8 +63,6 @@ private:
 	vector<AccelerationStructureBuffers> mBLAS;
 	AccelerationStructureBuffers mTLAS;
 	UINT mTLASSize = 0;
-
-	ComPtr<D3D12MA::Allocation> mOutputTexture;
 
 	vector<ComPtr<D3D12MA::Allocation>> mUploadBuffers;
 

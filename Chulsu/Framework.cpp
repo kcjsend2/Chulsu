@@ -1,5 +1,4 @@
 #include "Framework.h"
-#include "DX12Renderer.h"
 
 LRESULT CALLBACK Framework::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {

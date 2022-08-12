@@ -1,4 +1,5 @@
 #include "DX12Renderer.h"
+#include "Pipeline.h"
 
 DX12Renderer::DX12Renderer()
 {
@@ -6,7 +7,7 @@ DX12Renderer::DX12Renderer()
 
 DX12Renderer::~DX12Renderer()
 {
-    if (mD3dDevice) WaitUntilGPUComplete();
+    if (mDevice) WaitUntilGPUComplete();
     if (mFenceEvent) CloseHandle(mFenceEvent);
 }
 
@@ -117,47 +118,42 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
     // Initialize the debug layer for debug builds
 #ifdef _DEBUG
-    ComPtr<ID3D12Debug> pDebug;
-    ComPtr<ID3D12Debug5> pDebug5;
+    ComPtr<ID3D12Debug5> pDebug;
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&pDebug))))
     {
-        pDebug->QueryInterface(IID_PPV_ARGS(&pDebug5));
-        pDebug5->EnableDebugLayer();
-        pDebug5->SetEnableAutoName(true);
+        pDebug->EnableDebugLayer();
+        pDebug->SetEnableAutoName(true);
     }
 #endif
 
     // Create the DXGI factory
     ComPtr<IDXGIFactory4> pDxgiFactory;
     CreateDXGIFactory1(IID_PPV_ARGS(&pDxgiFactory));
-    mD3dDevice = CreateDevice(pDxgiFactory);
-    mCmdQueue = CreateCommandQueue(mD3dDevice);
+    mDevice = CreateDevice(pDxgiFactory);
+    mCmdQueue = CreateCommandQueue(mDevice);
     mSwapChain = CreateDxgiSwapChain(pDxgiFactory, mWinHandle, winWidth, winHeight, DXGI_FORMAT_R8G8B8A8_UNORM, mCmdQueue);
 
     // Create a RTV descriptor heap
-    mRtvHeap.pHeap = CreateDescriptorHeap(mD3dDevice, mRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
+    mRtvHeap.pHeap = CreateDescriptorHeap(mDevice, mRtvHeapSize, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, false);
 
     // Create the per-frame objects
     for (uint32_t i = 0; i < mSwapChainBufferCount; i++)
     {
-        mD3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrameObjects[i].pCommandAllocator));
+        mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrameObjects[i].pCommandAllocator));
         mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrameObjects[i].pSwapChainBuffer));
-        mFrameObjects[i].rtvHandle = CreateRTV(mD3dDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
+        mFrameObjects[i].rtvHandle = CreateRTV(mDevice, mFrameObjects[i].pSwapChainBuffer, mRtvHeap.pHeap, mRtvHeap.usedEntries, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
     }
 
     mResourceTracker.AddTrackingResource(mFrameObjects[0].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
     // Create the command-list
-    mD3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mFrameObjects[0].pCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&mCmdList));
+    mDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mFrameObjects[0].pCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&mCmdList));
 
     // Create a fence and the event
-    mD3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
+    mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-    mAssetMgr = make_shared<AssetManager>(mD3dDevice.Get(), 256);
-    mAssetMgr->mCbvSrvUavDescriptorSize = mD3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    mAssetMgr->LoadTestTriangleModel(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
-    mAssetMgr->BuildAcceleerationStructure(mD3dDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr = make_shared<AssetManager>(mDevice.Get(), 256);
+    mAssetMgr->mCbvSrvUavDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 
@@ -188,6 +184,19 @@ void DX12Renderer::Draw()
     mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);
 
     mAssetMgr->FreeUploadBuffers();
+}
+
+void DX12Renderer::BuildObjects()
+{
+    mAssetMgr->LoadTestTriangleModel(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr->BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+
+    Pipeline pipeline;
+    pipeline.CreatePipelineState(mDevice, L"DefaultRayTrace.hlsl");
+
+    mOutputTexture = mAssetMgr->CreateBufferResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, NULL, mSwapChainSize.x, mSwapChainSize.y,
+        D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
 }
 
 void DX12Renderer::WaitUntilGPUComplete()

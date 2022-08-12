@@ -1,6 +1,9 @@
 #pragma once
+#include "stdafx.h"
 #include "Renderer.h"
 #include "AssetManager.h"
+
+class Pipeline;
 
 class DX12Renderer : public Renderer
 {
@@ -10,6 +13,7 @@ public:
 
 	virtual void Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight) override;
 	virtual void Draw() override;
+	virtual void BuildObjects() override;
 
 private:
 	void WaitUntilGPUComplete();
@@ -24,7 +28,7 @@ private:
 	const UINT mRtvHeapSize = 2;
 	static const UINT mSwapChainBufferCount = 2;
 
-	ComPtr<ID3D12Device5> mD3dDevice;
+	ComPtr<ID3D12Device5> mDevice;
 	ComPtr<ID3D12GraphicsCommandList4> mCmdList;
 	ComPtr<ID3D12CommandQueue> mCmdQueue;
 	ComPtr<IDXGIFactory4> mDxgiFactory;
@@ -54,4 +58,8 @@ private:
 	FrameObject mFrameObjects[mSwapChainBufferCount];
 
 	shared_ptr<AssetManager> mAssetMgr = NULL;
+
+	unordered_map<string, Pipeline> mPipelines;
+
+	ComPtr<D3D12MA::Allocation> mOutputTexture;
 };

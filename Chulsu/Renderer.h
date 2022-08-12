@@ -9,6 +9,7 @@ public:
 
 	virtual void Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight) {}
 	virtual void Draw() {}
+	virtual void BuildObjects() {}
 
 protected:
 	HWND mWinHandle = NULL;

@@ -1,4 +1,5 @@
 #include "Pipeline.h"
+#include "SubObject.h"
 
 void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* filename)
 {
