@@ -48,11 +48,18 @@ void Texture::LoadTextureFromDDS(
 	tracker.TransitionBarrier(cmdList, mTextureBufferAlloc->GetResource(), resourceStates);
 }
 
-void Texture::SetDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex)
+void Texture::SetSRVDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex)
 {
-	mCPUHandle = cpuHandle;
-	mGPUHandle = gpuHandle;
-	mDescriptorHeapIndex = DescriptorHeapIndex;
+	mSRVCPUHandle = cpuHandle;
+	mSRVGPUHandle = gpuHandle;
+	mSRVDescriptorHeapIndex = DescriptorHeapIndex;
+}
+
+void Texture::SetUAVDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex)
+{
+	mUAVCPUHandle = cpuHandle;
+	mUAVGPUHandle = gpuHandle;
+	mUAVDescriptorHeapIndex = DescriptorHeapIndex;
 }
 
 D3D12_SHADER_RESOURCE_VIEW_DESC Texture::ShaderResourceView() const
@@ -60,9 +67,9 @@ D3D12_SHADER_RESOURCE_VIEW_DESC Texture::ShaderResourceView() const
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = mTextureBufferAlloc->GetResource()->GetDesc().Format;
-	srvDesc.ViewDimension = mViewDimension;
+	srvDesc.ViewDimension = mSRVDimension;
 
-	switch (mViewDimension)
+	switch (mSRVDimension)
 	{
 	case D3D12_SRV_DIMENSION_TEXTURE2D:
 		srvDesc.Texture2D.MipLevels = -1;

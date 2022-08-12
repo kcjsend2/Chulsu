@@ -16,9 +16,11 @@ public:
 		const std::wstring& filePath,
 		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	void SetDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex);
+	void SetSRVDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex);
+	void SetUAVDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex);
 
-	void SetDimension(D3D12_SRV_DIMENSION dimension) { mViewDimension = dimension; }
+	void SetSRVDimension(D3D12_SRV_DIMENSION dimension) { mSRVDimension = dimension; }
+	void SetUAVDimension(D3D12_UAV_DIMENSION dimension) { mUAVDimension = dimension; }
 	string SetName(string name) { mName = name; }
 	string GetName() { return mName; }
 
@@ -29,15 +31,19 @@ public:
 protected:
 	ComPtr<D3D12MA::Allocation> mTextureBufferAlloc;
 
-	D3D12_SRV_DIMENSION mViewDimension{};
+	D3D12_SRV_DIMENSION mSRVDimension{};
+	D3D12_UAV_DIMENSION mUAVDimension{};
 
 	DXGI_FORMAT mBufferFormats	{};
 	UINT mBufferElementsCount = 0;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE mCPUHandle = {};
-	D3D12_GPU_DESCRIPTOR_HANDLE mGPUHandle = {};
+	D3D12_CPU_DESCRIPTOR_HANDLE mSRVCPUHandle = {};
+	D3D12_GPU_DESCRIPTOR_HANDLE mSRVGPUHandle = {};
+	UINT mSRVDescriptorHeapIndex = 0;
 
-	UINT mDescriptorHeapIndex = 0;
+	D3D12_CPU_DESCRIPTOR_HANDLE mUAVCPUHandle = {};
+	D3D12_GPU_DESCRIPTOR_HANDLE mUAVGPUHandle = {};
+	UINT mUAVDescriptorHeapIndex = 0;
 
 	string mName = {};
 };

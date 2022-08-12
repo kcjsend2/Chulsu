@@ -187,7 +187,8 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	ResourceStateTracker& tracker,
 	const std::wstring& filePath,
 	const D3D12_RESOURCE_STATES& resourceStates,
-	const D3D12_SRV_DIMENSION& dimension)
+	const D3D12_SRV_DIMENSION& srvDimension, const D3D12_UAV_DIMENSION& uavDimension,
+	bool isSRV, bool isUAV)
 {
 	shared_ptr<Texture> newTexture = make_shared<Texture>();
 	newTexture->LoadTextureFromDDS(device, cmdList, d3dAllocator, tracker, filePath, resourceStates);
@@ -195,17 +196,73 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	auto textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
 	auto textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
 
-	auto srv = newTexture->ShaderResourceView();
-	device->CreateShaderResourceView(newTexture->GetResource(), &srv, textureCPUHandle);
-	newTexture->SetDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
+	if (isSRV)
+	{
+		auto srv = newTexture->ShaderResourceView();
+		device->CreateShaderResourceView(newTexture->GetResource(), &srv, textureCPUHandle);
+		newTexture->SetSRVDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
 
-	newTexture->SetDimension(dimension);
+		mHeapCurrentIndex++;
+		
+		textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
+		textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
+	}
+	if (isUAV)
+	{
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uav = {};
+		uav.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		device->CreateUnorderedAccessView(newTexture->GetResource(), nullptr, &uav, textureCPUHandle);
+
+		mHeapCurrentIndex++;
+	}
+
+	newTexture->SetSRVDimension(srvDimension);
+	newTexture->SetUAVDimension(uavDimension);
 
 	mTextures[filePath] = newTexture;
 
-	mHeapCurrentIndex++;
 
 	return newTexture;
+}
+
+void AssetManager::SetTexture(ID3D12Device5* device,
+	ID3D12GraphicsCommandList4* cmdList,
+	ComPtr<D3D12MA::Allocation> alloc,
+	const wstring& textureName,
+	const D3D12_SRV_DIMENSION& srvDimension,
+	const D3D12_UAV_DIMENSION& uavDimension, bool isSRV, bool isUAV)
+{
+	shared_ptr<Texture> newTexture = make_shared<Texture>();
+	newTexture->SetResource(alloc);
+
+	auto textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
+	auto textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
+
+	if (isSRV)
+	{
+		auto srv = newTexture->ShaderResourceView();
+		device->CreateShaderResourceView(newTexture->GetResource(), &srv, textureCPUHandle);
+		newTexture->SetSRVDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
+
+		mHeapCurrentIndex++;
+
+		textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
+		textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
+	}
+	if (isUAV)
+	{
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uav = {};
+		uav.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		device->CreateUnorderedAccessView(newTexture->GetResource(), nullptr, &uav, textureCPUHandle);
+		newTexture->SetUAVDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
+
+		mHeapCurrentIndex++;
+	}
+
+	newTexture->SetSRVDimension(srvDimension);
+	newTexture->SetUAVDimension(uavDimension);
+
+	mTextures[textureName] = newTexture;
 }
 
 void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker)

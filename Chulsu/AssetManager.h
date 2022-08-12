@@ -39,7 +39,15 @@ public:
 		ResourceStateTracker& tracker,
 		const std::wstring& filePath,
 		const D3D12_RESOURCE_STATES& resourceStates,
-		const D3D12_SRV_DIMENSION& dimension); 
+		const D3D12_SRV_DIMENSION& srvDimension, const D3D12_UAV_DIMENSION& uavDimension,
+		bool isSRV, bool isUAV);
+
+	void SetTexture(ID3D12Device5* device,
+		ID3D12GraphicsCommandList4* cmdList,
+		ComPtr<D3D12MA::Allocation> alloc,
+		const wstring& textureName,
+		const D3D12_SRV_DIMENSION& srvDimension, const D3D12_UAV_DIMENSION& uavDimension,
+		bool isSRV, bool isUAV);
 
 	void BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker);
 

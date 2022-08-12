@@ -197,6 +197,8 @@ void DX12Renderer::BuildObjects()
     mOutputTexture = mAssetMgr->CreateBufferResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, NULL, mSwapChainSize.x, mSwapChainSize.y,
         D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
+    mAssetMgr->SetTexture(mDevice.Get(), mCmdList.Get(), mOutputTexture, 
+        L"OutputTexture", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
 }
 
 void DX12Renderer::WaitUntilGPUComplete()
