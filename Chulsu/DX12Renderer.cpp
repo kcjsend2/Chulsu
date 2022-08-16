@@ -158,14 +158,6 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::BuildObjects()
 {
-    mOutputResource = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
-        NULL, mSwapChainSize.x, mSwapChainSize.y,
-        D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-        DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-
-    mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource,
-        L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
-
     mAssetMgr.LoadTestTriangleInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 
@@ -173,6 +165,14 @@ void DX12Renderer::BuildObjects()
     pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
     pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
     mPipelines["RayTracing"] = pipeline;
+
+    mOutputResource = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
+        NULL, mSwapChainSize.x, mSwapChainSize.y,
+        D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+        DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+    mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource,
+        L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
 }
 
 void DX12Renderer::Draw()

@@ -15,20 +15,20 @@ namespace SubObject
         RootSignatureDesc desc;
         desc.range.resize(2);
 
-        // gOutput
+        // gRtScene
         desc.range[0].BaseShaderRegister = 0;
         desc.range[0].NumDescriptors = 1;
         desc.range[0].RegisterSpace = 0;
-        desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
         desc.range[0].OffsetInDescriptorsFromTableStart = 0;
 
-        // gRtScene
+        // gOutput
         desc.range[1].BaseShaderRegister = 0;
         desc.range[1].NumDescriptors = 1;
         desc.range[1].RegisterSpace = 0;
-        desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        desc.range[1].OffsetInDescriptorsFromTableStart = 1;
-
+        desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        desc.range[1].OffsetInDescriptorsFromTableStart = 0;
+        
         desc.rootParams.resize(1);
         desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         desc.rootParams[0].DescriptorTable.NumDescriptorRanges = UINT(desc.range.size());
