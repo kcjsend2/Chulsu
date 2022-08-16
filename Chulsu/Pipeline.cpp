@@ -36,7 +36,7 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
     subobjects[index++] = missHitRootAssociation.subobject; // 5 Associate Root Sig to Miss and CHS
 
     // Bind the payload size to the programs
-    ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 1);
+    ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 3);
     subobjects[index] = shaderConfig.subobject; // 6 Shader Config
 
     uint32_t shaderConfigIndex = index++; // 6

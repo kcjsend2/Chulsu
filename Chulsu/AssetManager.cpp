@@ -177,8 +177,8 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
-	v1.position = { 0.866f, -0.5f, 0 };
-	v1.position = { -0.866f, -0.5f, 0 };
+	v2.position = { 0.866f, -0.5f, 0 };
+	v3.position = { -0.866f, -0.5f, 0 };
 
 	const Vertex vertices[] = { v1, v2, v3 };
 
@@ -398,7 +398,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
 	buffers.mInstanceDesc->GetResource()->Map(0, nullptr, (void**)&instanceDescs);
-	ZeroMemory(instanceDescs, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * 3);
+	ZeroMemory(instanceDescs, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size());
 
 	// The transformation matrices for the instances
 	XMFLOAT4X4 transform;
