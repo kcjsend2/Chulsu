@@ -14,7 +14,7 @@ float3 linearToSrgb(float3 c)
 void rayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
-    float3 col = linearToSrgb(float3(1.0, 1.0, 1.0));
+    float3 col = linearToSrgb(float3(1.0, 0.0, 1.0));
     gOutput[launchIndex.xy] = float4(col, 1);
 }
 
