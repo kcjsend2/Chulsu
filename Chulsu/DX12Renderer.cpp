@@ -160,10 +160,52 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 void DX12Renderer::Draw()
 {
     const float clearColor[4] = { 0.4f, 0.6f, 0.2f, 1.0f };
-
     auto rtvIndex = mSwapChain->GetCurrentBackBufferIndex();
+
     mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET);
     mCmdList->ClearRenderTargetView(mFrameObjects[rtvIndex].rtvHandle, clearColor, 0, nullptr);
+    mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
+
+    ID3D12DescriptorHeap* heaps[] = { mAssetMgr.GetDescriptorHeap().Get() };
+    mCmdList->SetDescriptorHeaps(arraysize(heaps), heaps);
+
+    mResourceTracker.TransitionBarrier(mCmdList, mOutputResource->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
+    raytraceDesc.Width = mSwapChainSize.x;
+    raytraceDesc.Height = mSwapChainSize.y;
+    raytraceDesc.Depth = 1;
+
+    UINT entrySize = mPipelines["RayTracing"].GetShaderTableEntrySize();
+    auto shaderTable = mPipelines["RayTracing"].GetShaderTable()->GetResource();
+
+    // RayGen is the first entry in the shader-table
+    raytraceDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress() + 0 * entrySize;
+    raytraceDesc.RayGenerationShaderRecord.SizeInBytes = entrySize;
+
+    // Miss is the second entry in the shader-table
+    size_t missOffset = 1 * entrySize;
+    raytraceDesc.MissShaderTable.StartAddress = mPipelines["RayTracing"].GetShaderTable()->GetResource()->GetGPUVirtualAddress() + missOffset;
+    raytraceDesc.MissShaderTable.StrideInBytes = entrySize;
+    raytraceDesc.MissShaderTable.SizeInBytes = entrySize;   // Only a s single miss-entry
+
+    // Hit is the third entry in the shader-table
+    size_t hitOffset = 2 * entrySize;
+    raytraceDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + hitOffset;
+    raytraceDesc.HitGroupTable.StrideInBytes = entrySize;
+    raytraceDesc.HitGroupTable.SizeInBytes = entrySize;
+
+    // Bind the empty root signature
+    mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetEmptyRootSignature().Get());
+
+    // Dispatch
+    mCmdList->SetPipelineState1(mPipelines["RayTracing"].GetStateObject().Get());
+    mCmdList->DispatchRays(&raytraceDesc);
+
+    mResourceTracker.TransitionBarrier(mCmdList, mOutputResource->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE);
+    mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
+
+    mCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), mOutputResource->GetResource());
 
     mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
 
@@ -195,6 +237,9 @@ void DX12Renderer::BuildObjects()
 
     Pipeline pipeline;
     pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
+    pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
+
+    mPipelines["RayTracing"] = pipeline;
 
     mOutputResource = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
@@ -203,6 +248,7 @@ void DX12Renderer::BuildObjects()
 
     mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource, 
         L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
+
 }
 
 void DX12Renderer::WaitUntilGPUComplete()

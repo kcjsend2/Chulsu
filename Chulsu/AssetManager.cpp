@@ -25,7 +25,7 @@ void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
-	ComPtr<D3D12MA::Allocator> allocator,
+	ComPtr<D3D12MA::Allocator> alloc,
 	ResourceStateTracker& tracker,
 	const void* initData, UINT64 width, UINT64 height,
 	D3D12_RESOURCE_STATES initialState,
@@ -39,11 +39,11 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 	allocationDesc.HeapType = heapType;
 
 	auto resourceDesc = CD3DX12_RESOURCE_DESC(dimension, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-		width, 1, 1, 1, format, 1, 0, layout, flag);
+		width, height, 1, 1, format, 1, 0, layout, flag);
 
 	auto resourceState = initData != NULL ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
 	ComPtr<D3D12MA::Allocation> defaultAllocation;
-	allocator->CreateResource(
+	alloc->CreateResource(
 		&allocationDesc,
 		&resourceDesc,
 		resourceState,
@@ -59,7 +59,7 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 		ComPtr<D3D12MA::Allocation> UploadAlloc = nullptr;
 
 		allocationDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-		allocator->CreateResource(
+		alloc->CreateResource(
 			&allocationDesc,
 			&resourceDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -85,7 +85,7 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 }
 
 void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path)
+	D3D12MA::Allocator* alloc, ResourceStateTracker& tracker, const std::string& path)
 {
 	Assimp::Importer Importer;
 	constexpr uint32_t ImporterFlags =
@@ -148,7 +148,7 @@ void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 		}
 
 		SubMesh subMesh;
-		subMesh.InitializeBuffers(device, cmdList, allocator, tracker, *this, sizeof(Vertex), sizeof(UINT),
+		subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
 		subMeshes.push_back(subMesh);
 	}
@@ -158,12 +158,12 @@ void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 }
 
 
-void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* allocator,
+void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* alloc,
 	ResourceStateTracker& tracker, const std::string& path,
 	XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale)
 {
 	if(mMeshMap[path] == NULL)
-		LoadMesh(device, cmdList, allocator, tracker, path);
+		LoadMesh(device, cmdList, alloc, tracker, path);
 
 	shared_ptr<Instance> instance = make_shared<Instance>(position, rotation, scale);
 	instance->SetMesh(mMeshMap[path]);
@@ -173,7 +173,7 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 }
 
 
-void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker& tracker)
+void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
@@ -185,7 +185,7 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 	shared_ptr<Instance> instance = make_shared<Instance>();
 
 	SubMesh subMesh;
-	subMesh.InitializeBuffers(device, cmdList, allocator, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
 	
 	vector<SubMesh> subMeshes;
 	subMeshes.push_back(subMesh);
@@ -219,7 +219,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHandle(const UINT& index)
 
 shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* d3dAllocator,
+	D3D12MA::Allocator* alloc,
 	ResourceStateTracker& tracker,
 	const std::wstring& filePath,
 	const D3D12_RESOURCE_STATES& resourceStates,
@@ -227,7 +227,7 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	bool isSRV, bool isUAV)
 {
 	shared_ptr<Texture> newTexture = make_shared<Texture>();
-	newTexture->LoadTextureFromDDS(device, cmdList, d3dAllocator, tracker, filePath, resourceStates);
+	newTexture->LoadTextureFromDDS(device, cmdList, alloc, tracker, filePath, resourceStates);
 
 	auto textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
 	auto textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
@@ -301,13 +301,13 @@ void AssetManager::SetTexture(ID3D12Device5* device,
 	mTextures[textureName] = newTexture;
 }
 
-void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker)
+void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker)
 {
-	BuildBLAS(device, cmdList, d3dAllocator, tracker);
-	BuildTLAS(device, cmdList, d3dAllocator, tracker, mTLASSize);
+	BuildBLAS(device, cmdList, alloc, tracker);
+	BuildTLAS(device, cmdList, alloc, tracker, mTLASSize);
 }
 
-void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker)
+void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker)
 {
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescs;
 	geomDescs.reserve(mMeshMap.size());
@@ -349,9 +349,9 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 		// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
 		AccelerationStructureBuffers buffers;
-		buffers.mScratch = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
+		buffers.mScratch = CreateResource(device, cmdList, alloc, tracker, NULL, info.ScratchDataSizeInBytes, 1,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-		buffers.mResult = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
+		buffers.mResult = CreateResource(device, cmdList, alloc, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
 			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
 		// Create the bottom-level AS
@@ -372,7 +372,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	}
 }
 
-void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize)
+void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker, UINT& tlasSize)
 {
 	// First, get the size of the TLAS buffers and create them
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -386,14 +386,14 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	// Create the buffers
 	AccelerationStructureBuffers buffers;
-	buffers.mScratch = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
+	buffers.mScratch = CreateResource(device, cmdList, alloc, tracker, NULL, info.ScratchDataSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	buffers.mResult = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
+	buffers.mResult = CreateResource(device, cmdList, alloc, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	tlasSize = info.ResultDataMaxSizeInBytes;
 
 	// The instance desc should be inside a buffer, create and map the buffer
-	buffers.mInstanceDesc = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size(), 1,
+	buffers.mInstanceDesc = CreateResource(device, cmdList, alloc, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size(), 1,
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
