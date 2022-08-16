@@ -1,8 +1,16 @@
 #include "AssetManager.h"
+#include "SubMesh.h"
+#include "Texture.h"
+#include "Instance.h"
 #include "Mesh.h"
 
-AssetManager::AssetManager(ID3D12Device* device, int numDescriptor)
+AssetManager::AssetManager()
 {
+}
+
+void AssetManager::Init(ID3D12Device* device, int numDescriptor)
+{
+
 	auto descHeapDescriptor = DescriptorHeapDesc(
 		numDescriptor,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
@@ -76,11 +84,9 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 	return defaultAllocation;
 }
 
-void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
+void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path)
 {
-	std::vector<shared_ptr<Mesh>> meshes;
-
 	Assimp::Importer Importer;
 	constexpr uint32_t ImporterFlags =
 		aiProcess_ConvertToLeftHanded |
@@ -100,7 +106,8 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		__debugbreak();
 	}
 
-	meshes.reserve(pAiScene->mNumMeshes);
+	vector<SubMesh> subMeshes;
+	subMeshes.reserve(pAiScene->mNumMeshes);
 	for (unsigned m = 0; m < pAiScene->mNumMeshes; ++m)
 	{
 		// Assimp object
@@ -140,16 +147,33 @@ void AssetManager::LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 			Indices.push_back(Face.mIndices[2]);
 		}
 
-		auto mesh = make_shared<Mesh>();
-		mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, this, sizeof(Vertex), sizeof(UINT),
+		SubMesh subMesh;
+		subMesh.InitializeBuffers(device, cmdList, allocator, tracker, *this, sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
-		meshes.push_back(mesh);
+		subMeshes.push_back(subMesh);
 	}
+	shared_ptr<Mesh> mesh = make_shared<Mesh>(subMeshes);
 
-	mMeshMap[path] = meshes;
+	mMeshMap[path] = mesh;
 }
 
-void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker& tracker)
+
+void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* allocator,
+	ResourceStateTracker& tracker, const std::string& path,
+	XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale)
+{
+	if(mMeshMap[path] == NULL)
+		LoadMesh(device, cmdList, allocator, tracker, path);
+
+	shared_ptr<Instance> instance = make_shared<Instance>(position, rotation, scale);
+	instance->SetMesh(mMeshMap[path]);
+	instance->Update();
+
+	mInstances.push_back(instance);
+}
+
+
+void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker& tracker)
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
@@ -158,12 +182,21 @@ void AssetManager::LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCo
 
 	const Vertex vertices[] = { v1, v2, v3 };
 
-	auto mesh = make_shared<Mesh>();
-	mesh->InitializeMeshBuffers(device, cmdList, allocator, tracker, this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	shared_ptr<Instance> instance = make_shared<Instance>();
 
-	std::vector<shared_ptr<Mesh>> meshes;
-	meshes.push_back(mesh);
-	mMeshMap["Triangle"] = meshes;
+	SubMesh subMesh;
+	subMesh.InitializeBuffers(device, cmdList, allocator, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	
+	vector<SubMesh> subMeshes;
+	subMeshes.push_back(subMesh);
+
+	auto mesh = make_shared<Mesh>(subMeshes);
+	mMeshMap["Triangle"] = mesh;
+
+	instance->SetMesh(mesh);
+
+	instance->Update();
+	mInstances.push_back(instance);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
@@ -270,69 +303,73 @@ void AssetManager::SetTexture(ID3D12Device5* device,
 
 void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker)
 {
-	for(auto i = mMeshMap.begin(); i != mMeshMap.end(); ++i)
-		BuildBLAS(device, cmdList, d3dAllocator, tracker, i->second);
+	BuildBLAS(device, cmdList, d3dAllocator, tracker);
 	BuildTLAS(device, cmdList, d3dAllocator, tracker, mTLASSize);
 }
 
-void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes)
+void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker)
 {
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescs;
 	geomDescs.reserve(mMeshMap.size());
 
-	for (auto i = meshes.begin(); i != meshes.end(); ++i)
+	for (auto i = mMeshMap.begin(); i != mMeshMap.end(); ++i)
 	{
-		D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
-		geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-		geomDesc.Triangles.VertexBuffer.StartAddress = (*i)->GetVertexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
-		geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
-		geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
-		geomDesc.Triangles.VertexCount = (*i)->GetVertexCount();
-
-		if ((*i)->GetIndexCount() > 0)
+		auto mesh = i->second;
+		auto subMeshes = mesh->GetSubMeshes();
+		for (auto j = subMeshes.begin(); j != subMeshes.end(); ++j)
 		{
-			geomDesc.Triangles.IndexBuffer = (*i)->GetIndexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
-			geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
-			geomDesc.Triangles.IndexCount = (*i)->GetIndexCount();
+			D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
+			geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+			geomDesc.Triangles.VertexBuffer.StartAddress = (*j).GetVertexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
+			geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
+			geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+			geomDesc.Triangles.VertexCount = (*j).GetVertexCount();
+
+			if ((*j).GetIndexCount() > 0)
+			{
+				geomDesc.Triangles.IndexBuffer = (*j).GetIndexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
+				geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
+				geomDesc.Triangles.IndexCount = (*j).GetIndexCount();
+			}
+			geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+			geomDescs.push_back(geomDesc);
 		}
-		geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
-		geomDescs.push_back(geomDesc);
+		// Get the size requirements for the scratch and AS buffers
+		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+		inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+		inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+		inputs.NumDescs = geomDescs.size();
+		inputs.pGeometryDescs = geomDescs.data();
+		inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+
+		D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
+		device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
+
+		// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
+		AccelerationStructureBuffers buffers;
+		buffers.mScratch = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		buffers.mResult = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
+			D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+		// Create the bottom-level AS
+		D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
+		asDesc.Inputs = inputs;
+		asDesc.DestAccelerationStructureData = buffers.mResult->GetResource()->GetGPUVirtualAddress();
+		asDesc.ScratchAccelerationStructureData = buffers.mScratch->GetResource()->GetGPUVirtualAddress();
+
+		cmdList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
+
+		// We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
+		D3D12_RESOURCE_BARRIER uavBarrier = {};
+		uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+		uavBarrier.UAV.pResource = buffers.mResult->GetResource();
+		cmdList->ResourceBarrier(1, &uavBarrier);
+
+		mesh->SetBLAS(buffers);
 	}
-
-	// Get the size requirements for the scratch and AS buffers
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
-	inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-	inputs.NumDescs = geomDescs.size();
-	inputs.pGeometryDescs = geomDescs.data();
-	inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info = {};
-	device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
-
-	// Create the buffers. They need to support UAV, and since we are going to immediately use them, we create them with an unordered-access state
-	AccelerationStructureBuffers buffers;
-	buffers.mScratch = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ScratchDataSizeInBytes, 1,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	buffers.mResult = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, info.ResultDataMaxSizeInBytes, 1,
-		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-
-	// Create the bottom-level AS
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
-	asDesc.Inputs = inputs;
-	asDesc.DestAccelerationStructureData = buffers.mResult->GetResource()->GetGPUVirtualAddress();
-	asDesc.ScratchAccelerationStructureData = buffers.mScratch->GetResource()->GetGPUVirtualAddress();
-
-	cmdList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
-
-	// We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
-	D3D12_RESOURCE_BARRIER uavBarrier = {};
-	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-	uavBarrier.UAV.pResource = buffers.mResult->GetResource();
-	cmdList->ResourceBarrier(1, &uavBarrier);
-
-	mBLAS.push_back(buffers);
 }
 
 void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize)
@@ -341,7 +378,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
 	inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
 	inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
-	inputs.NumDescs = mBLAS.size();
+	inputs.NumDescs = mInstances.size();
 	inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
 
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
@@ -356,7 +393,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	tlasSize = info.ResultDataMaxSizeInBytes;
 
 	// The instance desc should be inside a buffer, create and map the buffer
-	buffers.mInstanceDesc = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mBLAS.size(), 1,
+	buffers.mInstanceDesc = CreateResource(device, cmdList, d3dAllocator, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size(), 1,
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
@@ -367,14 +404,14 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	XMFLOAT4X4 transform;
 	transform = Matrix4x4::Identity4x4(); // Identity
 
-	for (uint32_t i = 0; i < mBLAS.size(); i++)
+	for (uint32_t i = 0; i < mInstances.size(); i++)
 	{
 		instanceDescs[i].InstanceID = i; // This value will be exposed to the shader via InstanceID()
 		instanceDescs[i].InstanceContributionToHitGroupIndex = i;  // This is the offset inside the shader-table. Since we have unique constant-buffer for each instance, we need a different offset
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
-		instanceDescs[i].AccelerationStructure = mBLAS[i].mResult->GetResource()->GetGPUVirtualAddress();
+		instanceDescs[i].AccelerationStructure = mInstances[i]->GetMesh()->GetBLAS().mResult->GetResource()->GetGPUVirtualAddress();
 		instanceDescs[i].InstanceMask = 0xFF;
 	}
 

@@ -56,7 +56,7 @@ private:
 	};
 	FrameObject mFrameObjects[mSwapChainBufferCount];
 
-	shared_ptr<AssetManager> mAssetMgr = NULL;
+	AssetManager mAssetMgr;
 
 	unordered_map<string, Pipeline> mPipelines;
 

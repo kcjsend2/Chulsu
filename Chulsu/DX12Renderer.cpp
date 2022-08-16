@@ -152,8 +152,8 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-    mAssetMgr = make_shared<AssetManager>(mDevice.Get(), 256);
-    mAssetMgr->mCbvSrvUavDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    mAssetMgr.Init(mDevice.Get(), 256);
+    mAssetMgr.mCbvSrvUavDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 
@@ -185,23 +185,23 @@ void DX12Renderer::Draw()
     mFrameObjects[bufferIndex].pCommandAllocator->Reset();
     mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);
 
-    mAssetMgr->FreeUploadBuffers();
+    mAssetMgr.FreeUploadBuffers();
 }
 
 void DX12Renderer::BuildObjects()
 {
-    mAssetMgr->LoadTestTriangleModel(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
-    mAssetMgr->BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr.LoadTestTriangleInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 
     Pipeline pipeline;
     pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
 
-    mOutputResource = mAssetMgr->CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
+    mOutputResource = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
         D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    mAssetMgr->SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource, 
+    mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource, 
         L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
 }
 

@@ -1,51 +1,20 @@
 #pragma once
 #include "stdafx.h"
-#include "AssetManager.h"
+#include "SubMesh.h"
 
-struct Vertex
+class Mesh
 {
 public:
-	XMFLOAT3 position = {0, 0, 0};
-	XMFLOAT3 normal = { 0, 0, 0 };
-	XMFLOAT2 texCoord = { 0, 0 };
-	XMFLOAT3 tangent = { 0, 0, 0 };
-	XMFLOAT3 biTangent = { 0, 0, 0 };
-};
+	Mesh() = default;
+	Mesh(vector<SubMesh>& subMeshes) { mSubMeshes = subMeshes; }
 
-class Mesh	
-{
-public:
-	Mesh() {}
-	virtual ~Mesh() {}
+	void SetBLAS(AccelerationStructureBuffers& blas) { mBLAS = blas; }
+	AccelerationStructureBuffers& GetBLAS() { return mBLAS; }
 
-	void InitializeMeshBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker tracker, AssetManager* assetMgr, UINT vbStride, UINT ibStride,
-		D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
-
-	UINT GetVertexCount() { return mVerticesCount; }
-	UINT GetIndexCount() { return mIndexCount; }
-
-	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc () { return mVertexBufferAlloc; }
-	ComPtr<D3D12MA::Allocation> GetIndexBufferAlloc() { return mIndexBufferAlloc; }
+	void SetSubMesh(SubMesh subMesh) { mSubMeshes.push_back(subMesh); }
+	vector<SubMesh>& GetSubMeshes() { return mSubMeshes; }
 
 private:
-	int mAlbedoTextureIndex = NULL;
-	int mMetalicTextureIndex = NULL;
-	int mRoughnessTextureIndex = NULL;
-	int mNormalMapTextureIndex = NULL;
-
-	ComPtr<D3D12MA::Allocation> mVertexBufferAlloc;
-	ComPtr<D3D12MA::Allocation> mIndexBufferAlloc;
-
-	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {};
-	D3D12_INDEX_BUFFER_VIEW mIndexBufferView = {};
-
-	D3D12_PRIMITIVE_TOPOLOGY mPrimitiveTopology = {};
-
-	BoundingOrientedBox mOOBB = {};
-
-	UINT mSlot = 0;
-	UINT mVerticesCount = 0;
-	UINT mVertexStride = 0;
-	UINT mIndexCount = 0;
+	vector<SubMesh> mSubMeshes;
+	AccelerationStructureBuffers mBLAS;
 };

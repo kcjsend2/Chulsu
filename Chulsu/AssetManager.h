@@ -1,22 +1,25 @@
 #pragma once
 #include "stdafx.h"
-#include "Texture.h"
 
+class Texture;
+class Instance;
+class SubMesh;
 class Mesh;
 struct Vertex;
 
 struct AccelerationStructureBuffers
 {
-	ComPtr<D3D12MA::Allocation> mScratch;
-	ComPtr<D3D12MA::Allocation> mResult;
-	ComPtr<D3D12MA::Allocation> mInstanceDesc;    // Used only for top-level AS
+	ComPtr<D3D12MA::Allocation> mScratch = NULL;
+	ComPtr<D3D12MA::Allocation> mResult = NULL;
+	ComPtr<D3D12MA::Allocation> mInstanceDesc = NULL;    // Used only for top-level AS
 };
 
 class AssetManager
 {
 public:
-	AssetManager(ID3D12Device* device, int numDescriptor);
+	AssetManager();
 
+	void Init(ID3D12Device* device, int numDescriptor);
 
 	ComPtr<D3D12MA::Allocation> CreateResource(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
@@ -25,10 +28,13 @@ public:
 		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_DIMENSION dimension,
 		DXGI_FORMAT format, D3D12_TEXTURE_LAYOUT layout, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 
-	void LoadModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path);
+	void LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path);
 
-	void LoadTestTriangleModel(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
+	void CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
+		D3D12MA::Allocator* allocator, ResourceStateTracker& tracker, const std::string& path,
+		XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
+
+	void LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		ComPtr<D3D12MA::Allocator> allocator, ResourceStateTracker& tracker);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHandle(const UINT& index);
@@ -52,7 +58,7 @@ public:
 
 	void BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker);
 
-	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, const vector<shared_ptr<Mesh>>& meshes);
+	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker);
 
 	// We will move this function to scene class later.
 	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> d3dAllocator, ResourceStateTracker tracker, UINT& tlasSize);
@@ -60,16 +66,15 @@ public:
 	void PushUploadBuffer(ComPtr<D3D12MA::Allocation> alloc) { mUploadBuffers.push_back(alloc); }
 	void FreeUploadBuffers() { mUploadBuffers.clear(); }
 
-	vector<AccelerationStructureBuffers>& GetBLAS() { return mBLAS; }
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
 
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 private:
-	unordered_map<string, vector<shared_ptr<Mesh>>> mMeshMap;
+	unordered_map<string, shared_ptr<Mesh>> mMeshMap;
+	vector<shared_ptr<Instance>> mInstances;
 	unordered_map<wstring, shared_ptr<Texture>> mTextures;
 
-	vector<AccelerationStructureBuffers> mBLAS;
 	AccelerationStructureBuffers mTLAS;
 	UINT mTLASSize = 0;
 

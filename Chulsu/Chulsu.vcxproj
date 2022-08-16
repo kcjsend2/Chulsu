@@ -152,8 +152,10 @@
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="D3D12MemAlloc.cpp" />
     <ClCompile Include="DDSTextureLoader12.cpp" />
+    <ClCompile Include="Instance.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="SubMesh.cpp" />
     <ClCompile Include="DX12Renderer.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="main.cpp" />
@@ -165,8 +167,10 @@
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="D3D12MemAlloc.h" />
     <ClInclude Include="DDSTextureLoader12.h" />
+    <ClInclude Include="Instance.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="SubMesh.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DX12Renderer.h" />
     <ClInclude Include="Framework.h" />

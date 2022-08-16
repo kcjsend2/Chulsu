@@ -243,4 +243,15 @@ namespace Matrix4x4
 		XMStoreFloat4x4(&world, scaling * rotation * translation);
 		return world;
 	}
+
+	inline XMFLOAT4X4 CalulateWorldTransform(const XMFLOAT3& position, const XMFLOAT3& rotate, const XMFLOAT3& scale)
+	{
+		XMMATRIX translation = XMMatrixTranslationFromVector(XMLoadFloat3(&position));
+		XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&rotate));
+		XMMATRIX scaling = XMMatrixScalingFromVector(XMLoadFloat3(&scale));
+
+		XMFLOAT4X4 world{};
+		XMStoreFloat4x4(&world, scaling * rotation * translation);
+		return world;
+	}
 }

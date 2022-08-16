@@ -33,7 +33,7 @@
     <ClCompile Include="D3D12MemAlloc.cpp">
       <Filter>소스 파일\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
+    <ClCompile Include="SubMesh.cpp">
       <Filter>소스 파일\Core</Filter>
     </ClCompile>
     <ClCompile Include="AssetManager.cpp">
@@ -52,6 +52,12 @@
       <Filter>소스 파일\Core</Filter>
     </ClCompile>
     <ClCompile Include="Pipeline.cpp">
+      <Filter>소스 파일\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance.cpp">
+      <Filter>소스 파일\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
       <Filter>소스 파일\Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -74,7 +80,7 @@
     <ClInclude Include="D3D12MemAlloc.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
+    <ClInclude Include="SubMesh.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="AssetManager.h">
@@ -96,6 +102,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="SubObject.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Instance.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
