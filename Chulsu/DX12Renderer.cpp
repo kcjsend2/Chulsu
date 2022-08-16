@@ -158,6 +158,14 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::BuildObjects()
 {
+    mAssetMgr.LoadTestTriangleInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+
+    Pipeline pipeline;
+    pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
+    pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
+    mPipelines["RayTracing"] = pipeline;
+
     mOutputResource = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
         D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
@@ -166,13 +174,6 @@ void DX12Renderer::BuildObjects()
     mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource,
         L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
 
-    mAssetMgr.LoadTestTriangleInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
-    mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
-
-    Pipeline pipeline;
-    pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
-    pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
-    mPipelines["RayTracing"] = pipeline;
 }
 
 void DX12Renderer::Draw()
@@ -205,7 +206,7 @@ void DX12Renderer::Draw()
     size_t missOffset = 1 * entrySize;
     raytraceDesc.MissShaderTable.StartAddress = mPipelines["RayTracing"].GetShaderTable()->GetResource()->GetGPUVirtualAddress() + missOffset;
     raytraceDesc.MissShaderTable.StrideInBytes = entrySize;
-    raytraceDesc.MissShaderTable.SizeInBytes = entrySize;   // Only a s single miss-entry
+    raytraceDesc.MissShaderTable.SizeInBytes = entrySize;
 
     // Hit is the third entry in the shader-table
     size_t hitOffset = 2 * entrySize;

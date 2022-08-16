@@ -1,5 +1,5 @@
 RaytracingAccelerationStructure gRtScene : register(t0);
-RWTexture2D<float4> gOutput : register(u0);
+RWTexture2D<float4> gOutput[] : register(u0);
 
 float3 linearToSrgb(float3 c)
 {
@@ -15,7 +15,7 @@ void rayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
     float3 col = linearToSrgb(float3(1.0, 0.0, 1.0));
-    gOutput[launchIndex.xy] = float4(col, 1);
+    gOutput[1][launchIndex.xy] = float4(col, 1);
 }
 
 struct Payload
