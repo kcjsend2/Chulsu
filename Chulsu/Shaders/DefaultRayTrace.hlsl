@@ -1,4 +1,4 @@
-RaytracingAccelerationStructure gRtScene[] : register(t0);
+RaytracingAccelerationStructure gRtScene : register(t0);
 RWTexture2D<float4> gOutput[] : register(u0);
 
 float3 linearToSrgb(float3 c)
@@ -36,7 +36,8 @@ void rayGen()
     ray.TMax = 100000;
 
     RayPayload payload;
-    TraceRay(gRtScene[1], 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
+    
+    //TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
     float3 col = linearToSrgb(float3(1.0f, 1.0f, 0.0f));
     gOutput[0][launchIndex.xy] = float4(col, 1);
 }
