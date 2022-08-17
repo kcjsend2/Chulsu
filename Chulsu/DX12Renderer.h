@@ -61,6 +61,4 @@ private:
 	unordered_map<string, Pipeline> mPipelines;
 
 	ComPtr<D3D12MA::Allocation> mOutputResource;
-
-	ComPtr<IDXGraphicsAnalysis> mAnalysis;
 };
