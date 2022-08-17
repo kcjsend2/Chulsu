@@ -27,7 +27,7 @@ void rayGen()
 
     float2 d = ((crd / dims) * 2.f - 1.f);
     float aspectRatio = dims.x / dims.y;
-
+    
     RayDesc ray;
     ray.Origin = float3(0, 0, -2);
     ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
@@ -37,9 +37,11 @@ void rayGen()
 
     RayPayload payload;
     
-    TraceRay(gRtScene[0], 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
+    TraceRay(gRtScene[0], 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
+
     float3 col = linearToSrgb(float3(1.0f, 1.0f, 0.0f));
     gOutput[1][launchIndex.xy] = float4(col, 1);
+
 }
 
 [shader("miss")]

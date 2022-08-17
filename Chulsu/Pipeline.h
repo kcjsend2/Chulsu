@@ -21,7 +21,6 @@ protected:
 
 	ComPtr<D3D12MA::Allocation> mShaderTable = NULL;
 
-	vector<D3D12_STATE_SUBOBJECT> mSubObjects;
 	ComPtr<ID3D12StateObject> mPipelineState = NULL;
 	ComPtr<ID3D12RootSignature> mEmptyRootSig = NULL;
 };
