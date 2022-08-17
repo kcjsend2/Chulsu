@@ -175,17 +175,17 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 
 void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
-	Vertex v1, v2, v3;
-	v1.position = { 0, 1, 0 };
-	v2.position = { 0.866f, -0.5f, 0 };
-	v3.position = { -0.866f, -0.5f, 0 };
+	XMFLOAT3 v1, v2, v3;
+	v1 = { 0, 1, 0 };
+	v2 = { 0.866f, -0.5f, 0 };
+	v3 = { -0.866f, -0.5f, 0 };
 
-	const Vertex vertices[] = { v1, v2, v3 };
+	const XMFLOAT3 vertices[] = { v1, v2, v3 };
 
 	shared_ptr<Instance> instance = make_shared<Instance>();
 
 	SubMesh subMesh;
-	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(XMFLOAT3), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
 	
 	vector<SubMesh> subMeshes;
 	subMeshes.push_back(subMesh);
@@ -321,7 +321,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 			D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
 			geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 			geomDesc.Triangles.VertexBuffer.StartAddress = (*j).GetVertexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
-			geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
+			geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
 			geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			geomDesc.Triangles.VertexCount = (*j).GetVertexCount();
 

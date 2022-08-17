@@ -37,9 +37,7 @@ void rayGen()
 
     RayPayload payload;
     
-    RaytracingAccelerationStructure rtScene[0] = gRtScene;
-    
-    //TraceRay(gRtScene[0], 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
+    TraceRay(gRtScene[0], 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
     float3 col = linearToSrgb(float3(1.0f, 1.0f, 0.0f));
     gOutput[1][launchIndex.xy] = float4(col, 1);
 }
