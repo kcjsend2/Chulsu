@@ -85,7 +85,7 @@ void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandLis
         DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
     // Map the buffer
-    uint8_t * pData;
+    uint8_t* pData;
     mShaderTable->GetResource()->Map(0, nullptr, (void**)&pData);
 
     ComPtr<ID3D12StateObjectProperties> pRtsoProps;

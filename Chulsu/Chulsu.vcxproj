@@ -202,6 +202,7 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.606.3\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.606.3\build\native\Microsoft.Direct3D.D3D12.targets')" />
     <Import Project="..\packages\vcpkg.C.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.targets" Condition="Exists('..\packages\vcpkg.C.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.targets')" />
+    <Import Project="..\packages\WinPixEventRuntime.1.0.220810001\build\WinPixEventRuntime.targets" Condition="Exists('..\packages\WinPixEventRuntime.1.0.220810001\build\WinPixEventRuntime.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -211,5 +212,6 @@
     <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.606.3\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.606.3\build\native\Microsoft.Direct3D.D3D12.targets'))" />
     <Error Condition="!Exists('..\packages\vcpkg.C.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\vcpkg.C.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.props'))" />
     <Error Condition="!Exists('..\packages\vcpkg.C.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\vcpkg.C.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.targets'))" />
+    <Error Condition="!Exists('..\packages\WinPixEventRuntime.1.0.220810001\build\WinPixEventRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\WinPixEventRuntime.1.0.220810001\build\WinPixEventRuntime.targets'))" />
   </Target>
 </Project>

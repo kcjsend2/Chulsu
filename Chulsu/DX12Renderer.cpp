@@ -3,6 +3,8 @@
 
 DX12Renderer::DX12Renderer()
 {
+    DXGIGetDebugInterface1(0, IID_PPV_ARGS(&mAnalysis));
+    mAnalysis->BeginCapture();
 }
 
 DX12Renderer::~DX12Renderer()
@@ -240,12 +242,14 @@ void DX12Renderer::Draw()
 
     WaitUntilGPUComplete();
 
-    ThrowIfFailed(mDevice->GetDeviceRemovedReason());
+    //ThrowIfFailed(mDevice->GetDeviceRemovedReason());
 
     mFrameObjects[bufferIndex].pCommandAllocator->Reset();
     mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);
 
     mAssetMgr.FreeUploadBuffers();
+
+    mAnalysis->EndCapture();
 }
 
 void DX12Renderer::WaitUntilGPUComplete()

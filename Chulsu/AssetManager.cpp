@@ -310,7 +310,6 @@ void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12Graph
 void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker)
 {
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescs;
-	geomDescs.reserve(mMeshMap.size());
 
 	for (auto i = mMeshMap.begin(); i != mMeshMap.end(); ++i)
 	{

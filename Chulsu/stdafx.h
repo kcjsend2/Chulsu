@@ -47,6 +47,7 @@
 #include <codecvt>
 #include <filesystem>
 #include <span>
+#include <DXProgrammableCapture.h>
 
 #include "dxc/dxcapi.use.h"
 #include <d3dcompiler.h>
@@ -58,6 +59,7 @@
 #include "DirectXTex.h"
 #include "D3D12MemAlloc.h"
 #include "DDSTextureLoader12.h"
+#include "pix3.h"
 
 using namespace std;
 using namespace DirectX;
