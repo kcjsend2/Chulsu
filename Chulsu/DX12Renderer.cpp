@@ -50,7 +50,7 @@ ComPtr<ID3D12Device5> DX12Renderer::CreateDevice(ComPtr<IDXGIFactory4> pDxgiFact
         }
 #endif
         // Create the device
-        ComPtr<ID3D12Device5> pDevice;
+        ComPtr<ID3D12Device> pDevice;
         D3D12CreateDevice(pAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&pDevice));
 
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5;
@@ -67,7 +67,10 @@ ComPtr<ID3D12Device5> DX12Renderer::CreateDevice(ComPtr<IDXGIFactory4> pDxgiFact
 
             ThrowIfFailed(D3D12MA::CreateAllocator(&allocatorDesc, &mMemAllocator));
 
-            return pDevice;
+            ComPtr<ID3D12Device5> device5;
+            pDevice->QueryInterface(IID_PPV_ARGS(&device5));
+
+            return device5;
         }
     }
 

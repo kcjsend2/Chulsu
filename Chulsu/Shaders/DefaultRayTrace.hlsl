@@ -55,8 +55,8 @@ void rayGen()
     ray.TMax = 100000;
 
     RayPayload payload;
-    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[0];
-    RWTexture2D<float4> output = ResourceDescriptorHeap[1];
+    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[1];
+    RWTexture2D<float4> output = ResourceDescriptorHeap[2];
     
     TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
 
