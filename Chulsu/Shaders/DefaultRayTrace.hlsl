@@ -39,7 +39,7 @@ void rayGen()
     
     TraceRay(gRtScene[0], 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
 
-    float3 col = linearToSrgb(float3(1.0f, 1.0f, 0.0f));
+    float3 col = linearToSrgb(payload.color);
     gOutput[1][launchIndex.xy] = float4(col, 1);
 
 }

@@ -45,7 +45,7 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
     subobjects[index++] = configAssociation.subobject; // 7 Associate Shader Config to Miss, CHS, RGS
 
     // Create the pipeline config
-    PipelineConfig config(0);
+    PipelineConfig config(1);
     subobjects[index++] = config.subobject; // 8
 
     // Create the global root signature and store the empty signature
