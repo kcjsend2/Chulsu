@@ -17,6 +17,8 @@ public:
 
 	void Update();
 
+	const XMFLOAT4X4& GetWorldMatrix() { return mWorld; }
+
 private:
 	XMFLOAT4X4 mWorld = {};
 

@@ -181,22 +181,27 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 	v3 = { -0.866f, -0.5f, 0 };
 
 	const XMFLOAT3 vertices[] = { v1, v2, v3 };
+	const XMFLOAT3 positions[] = { {0, 0, 0}, {-2, 0, 0}, {2, 0, 0} };
 
-	shared_ptr<Instance> instance = make_shared<Instance>();
+	shared_ptr<Instance> instance[3] = { make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>() };
 
 	SubMesh subMesh;
 	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(XMFLOAT3), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
-	
+
 	vector<SubMesh> subMeshes;
 	subMeshes.push_back(subMesh);
 
 	auto mesh = make_shared<Mesh>(subMeshes);
 	mMeshMap["Triangle"] = mesh;
 
-	instance->SetMesh(mesh);
+	for (int i = 0; i < 3; ++i)
+	{
+		instance[i]->SetMesh(mMeshMap["Triangle"]);
+		instance[i]->SetPosition(positions[i]);
+		instance[i]->Update();
+		mInstances.push_back(instance[i]);
+	}
 
-	instance->Update();
-	mInstances.push_back(instance);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
@@ -400,13 +405,16 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	ZeroMemory(instanceDescs, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size());
 
 	// The transformation matrices for the instances
-	XMFLOAT4X4 transform;
-	transform = Matrix4x4::Identity4x4(); // Identity
 
 	for (uint32_t i = 0; i < mInstances.size(); i++)
 	{
-		instanceDescs[i].InstanceID = i; // This value will be exposed to the shader via InstanceID()
-		instanceDescs[i].InstanceContributionToHitGroupIndex = i;  // This is the offset inside the shader-table. Since we have unique constant-buffer for each instance, we need a different offset
+		XMFLOAT4X4 transform;
+		transform = mInstances[i]->GetWorldMatrix();
+
+		instanceDescs[i].InstanceID = i;
+
+		//TODO: Instance must have HitGroupIndex. for now, 0 is okay (for single geometry)
+		instanceDescs[i].InstanceContributionToHitGroupIndex = 0;
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
