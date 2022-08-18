@@ -9,6 +9,17 @@ struct VertexAttribute
     float3 biTangent;
 };
 
+cbuffer RayTraceCB : register(b0)
+{
+    uint AlbedoTextureIndex : packoffset(c0.x);
+    uint MetalicTextureIndex : packoffset(c0.y);
+    uint RoughnessTextureIndex : packoffset(c0.z);
+    uint NormalMapTextureIndex : packoffset(c0.w);
+
+    uint VertexAttribIndex : packoffset(c1.x);
+    uint IndexBufferIndex : packoffset(c1.y);
+}
+
 float3 linearToSrgb(float3 c)
 {
     // Based on http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html

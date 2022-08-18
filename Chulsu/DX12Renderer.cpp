@@ -211,7 +211,7 @@ void DX12Renderer::Draw()
     size_t hitOffset = 2 * entrySize;
     raytraceDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + hitOffset;
     raytraceDesc.HitGroupTable.StrideInBytes = entrySize;
-    raytraceDesc.HitGroupTable.SizeInBytes = entrySize;
+    raytraceDesc.HitGroupTable.SizeInBytes = entrySize * 3;
 
     // Bind the empty root signature
     mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetEmptyRootSignature().Get());
@@ -240,7 +240,7 @@ void DX12Renderer::Draw()
 
     WaitUntilGPUComplete();
 
-    ThrowIfFailed(mDevice->GetDeviceRemovedReason());
+    //ThrowIfFailed(mDevice->GetDeviceRemovedReason());
 
     mFrameObjects[bufferIndex].pCommandAllocator->Reset();
     mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);

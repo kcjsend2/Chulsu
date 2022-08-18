@@ -80,7 +80,7 @@ void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandLis
     mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     mShaderTableEntrySize += 8; // The ray-gen's descriptor table
     mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, mShaderTableEntrySize);
-    uint32_t shaderTableSize = mShaderTableEntrySize * 3;
+    uint32_t shaderTableSize = mShaderTableEntrySize * 5;
 
     mShaderTable = assetMgr.CreateResource(device, cmdList, alloc, tracker, NULL,
         shaderTableSize, 1, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER,
