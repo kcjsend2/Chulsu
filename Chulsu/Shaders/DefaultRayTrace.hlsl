@@ -1,6 +1,3 @@
-RaytracingAccelerationStructure gRtScene[] : register(t0);
-RWTexture2D<float4> gOutput[] : register(u0);
-
 float3 linearToSrgb(float3 c)
 {
     // Based on http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
@@ -36,11 +33,13 @@ void rayGen()
     ray.TMax = 100000;
 
     RayPayload payload;
+    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[0];
+    RWTexture2D<float4> output = ResourceDescriptorHeap[1];
     
-    TraceRay(gRtScene[0], 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
+    TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
 
     float3 col = linearToSrgb(payload.color);
-    gOutput[1][launchIndex.xy] = float4(col, 1);
+    output[launchIndex.xy] = float4(col, 1);
 
 }
 

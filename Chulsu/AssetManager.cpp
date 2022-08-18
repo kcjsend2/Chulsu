@@ -196,6 +196,8 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 
 	for (int i = 0; i < 3; ++i)
 	{
+		// TODO: Each Geometry needs index of fit HitGroup for render.
+		instance[i]->SetHitGroup(0);
 		instance[i]->SetMesh(mMeshMap["Triangle"]);
 		instance[i]->SetPosition(positions[i]);
 		instance[i]->Update();
@@ -388,7 +390,6 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
 	device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
 
-	// Create the buffers
 	AccelerationStructureBuffers buffers;
 	buffers.mScratch = CreateResource(device, cmdList, alloc, tracker, NULL, info.ScratchDataSizeInBytes, 1,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -396,15 +397,12 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 	tlasSize = info.ResultDataMaxSizeInBytes;
 
-	// The instance desc should be inside a buffer, create and map the buffer
 	buffers.mInstanceDesc = CreateResource(device, cmdList, alloc, tracker, NULL, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size(), 1,
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
 	D3D12_RAYTRACING_INSTANCE_DESC* instanceDescs;
 	buffers.mInstanceDesc->GetResource()->Map(0, nullptr, (void**)&instanceDescs);
 	ZeroMemory(instanceDescs, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * mInstances.size());
-
-	// The transformation matrices for the instances
 
 	for (uint32_t i = 0; i < mInstances.size(); i++)
 	{
@@ -414,7 +412,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		instanceDescs[i].InstanceID = i;
 
 		//TODO: Instance must have HitGroupIndex. for now, 0 is okay (for single geometry)
-		instanceDescs[i].InstanceContributionToHitGroupIndex = 0;
+		instanceDescs[i].InstanceContributionToHitGroupIndex = mInstances[i]->GetHitGroupIndex();
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));
@@ -422,10 +420,8 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		instanceDescs[i].InstanceMask = 0xFF;
 	}
 
-	// Unmap
 	buffers.mInstanceDesc->GetResource()->Unmap(0, nullptr);
 
-	// Create the TLAS
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC asDesc = {};
 	asDesc.Inputs = inputs;
 	asDesc.Inputs.InstanceDescs = buffers.mInstanceDesc->GetResource()->GetGPUVirtualAddress();
@@ -434,7 +430,6 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 
 	cmdList->BuildRaytracingAccelerationStructure(&asDesc, 0, nullptr);
 
-	// We need to insert a UAV barrier before using the acceleration structures in a raytracing operation
 	D3D12_RESOURCE_BARRIER uavBarrier = {};
 	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	uavBarrier.UAV.pResource = buffers.mResult->GetResource();

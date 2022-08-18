@@ -6,7 +6,16 @@ using namespace SubObject;
 
 void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* filename)
 {
-    std::array<D3D12_STATE_SUBOBJECT, 10> subobjects;
+    // Need 12 subobjects:
+  //  1 for DXIL library
+  //  1 for the hit-group
+  //  2 for RayGen root-signature (root-signature and the subobject association)
+  //  2 for hit-program root-signature (root-signature and the subobject association)
+  //  2 for miss-shader root-signature (signature and association)
+  //  2 for shader config (shared between all programs. 1 for the config, 1 for association)
+  //  1 for pipeline config
+  //  1 for the global root signature
+    std::array<D3D12_STATE_SUBOBJECT, 9> subobjects;
     uint32_t index = 0;
 
     // Create the DXIL library
@@ -16,50 +25,42 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
     HitProgram hitProgram(nullptr, kClosestHitShader, kHitGroup);
     subobjects[index++] = hitProgram.subObject; // 1 Hit Group
 
-    // Create the ray-gen root-signature and association
-    LocalRootSignature rgsRootSignature(device, CreateRayGenRootDesc().desc);
-    subobjects[index] = rgsRootSignature.subobject; // 2 RayGen Root Sig
-
-    uint32_t rgsRootIndex = index++; // 2
-    ExportAssociation rgsRootAssociation(&kRayGenShader, 1, &(subobjects[rgsRootIndex]));
-    subobjects[index++] = rgsRootAssociation.subobject; // 3 Associate Root Sig to RGS
-
-    // Create the miss- and hit-programs root-signature and association
+    // Create the miss root-signature and association
     D3D12_ROOT_SIGNATURE_DESC emptyDesc = {};
     emptyDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-    LocalRootSignature hitMissRootSignature(device, emptyDesc);
-    subobjects[index] = hitMissRootSignature.subobject; // 4 Root Sig to be shared between Miss and CHS
+    LocalRootSignature emptyRootSignature(device, emptyDesc);
+    subobjects[index] = emptyRootSignature.subobject; // 2 Miss Root Sig
 
-    uint32_t hitMissRootIndex = index++; // 4
-    const WCHAR* missHitExportName[] = { kMissShader, kClosestHitShader };
-    ExportAssociation missHitRootAssociation(missHitExportName, arraysize(missHitExportName), &(subobjects[hitMissRootIndex]));
-    subobjects[index++] = missHitRootAssociation.subobject; // 5 Associate Root Sig to Miss and CHS
+    uint32_t emptyRootIndex = index++; // 2
+    const WCHAR* emptyRootSigExports[] = { kMissShader, kClosestHitShader, kRayGenShader };
+    ExportAssociation missRootAssociation(emptyRootSigExports, 1, &(subobjects[emptyRootIndex]));
+    subobjects[index++] = missRootAssociation.subobject; // 3 Associate Miss Root Sig to Miss Shader
 
     // Bind the payload size to the programs
     ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 3);
-    subobjects[index] = shaderConfig.subobject; // 6 Shader Config
+    subobjects[index] = shaderConfig.subobject; // 4 Shader Config
 
-    uint32_t shaderConfigIndex = index++; // 6
+    uint32_t shaderConfigIndex = index++; // 5
     const WCHAR* shaderExports[] = { kMissShader, kClosestHitShader, kRayGenShader };
     ExportAssociation configAssociation(shaderExports, arraysize(shaderExports), &(subobjects[shaderConfigIndex]));
-    subobjects[index++] = configAssociation.subobject; // 7 Associate Shader Config to Miss, CHS, RGS
+    subobjects[index++] = configAssociation.subobject; // 6 Associate Shader Config to shaders
 
     // Create the pipeline config
     PipelineConfig config(1);
-    subobjects[index++] = config.subobject; // 8
+    subobjects[index++] = config.subobject; // 7
 
     // Create the global root signature and store the empty signature
-    GlobalRootSignature root(device, {});
+    GlobalRootSignature root(device, CreateGlobalRootDesc().desc);
     mEmptyRootSig = root.pRootSig;
-    subobjects[index++] = root.subobject; // 9
+    subobjects[index++] = root.subobject; // 8
 
     // Create the state
     D3D12_STATE_OBJECT_DESC desc;
-    desc.NumSubobjects = index; // 10
+    desc.NumSubobjects = index; // 9
     desc.pSubobjects = subobjects.data();
     desc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
-    ThrowIfFailed(device->CreateStateObject(&desc, IID_PPV_ARGS(&mPipelineState)));
+    device->CreateStateObject(&desc, IID_PPV_ARGS(&mPipelineState));
 }
 
 void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc,

@@ -42,6 +42,33 @@ namespace SubObject
         return desc;
     }
 
+    RootSignatureDesc CreateGlobalRootDesc()
+    {
+        // Create the root-signature
+        RootSignatureDesc desc;
+
+        // Create the desc
+        desc.desc.NumParameters = 0;
+        desc.desc.pParameters = desc.rootParams.data();
+        desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+
+        return desc;
+    }
+
+    RootSignatureDesc CreateHitRootDesc()
+    {
+        RootSignatureDesc desc;
+        desc.rootParams.resize(1);
+        desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        desc.rootParams[0].Descriptor.RegisterSpace = 0;
+        desc.rootParams[0].Descriptor.ShaderRegister = 0;
+
+        desc.desc.NumParameters = 1;
+        desc.desc.pParameters = desc.rootParams.data();
+        desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+
+        return desc;
+    }
 
     struct DxilLibrary
     {

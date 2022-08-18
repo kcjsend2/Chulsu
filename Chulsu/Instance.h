@@ -14,10 +14,12 @@ public:
 	void SetPosition(XMFLOAT3 position) { mPosition = position; }
 	void SetRotation(XMFLOAT3 rotation) { mRotation = rotation; }
 	void SetScale(XMFLOAT3 scale) { mScale = scale; }
+	void SetHitGroup(UINT hitGroupIndex) { mHitGroupIndex = hitGroupIndex; }
 
 	void Update();
 
 	const XMFLOAT4X4& GetWorldMatrix() { return mWorld; }
+	const UINT& GetHitGroupIndex() { return mHitGroupIndex; }
 
 private:
 	XMFLOAT4X4 mWorld = {};
@@ -30,6 +32,8 @@ private:
 	UINT mMetalicTextureIndex = UINT_MAX;
 	UINT mRoughnessTextureIndex = UINT_MAX;
 	UINT mNormalMapTextureIndex = UINT_MAX;
+
+	UINT mHitGroupIndex = UINT_MAX;
 
 	shared_ptr<Mesh> mMesh;
 };
