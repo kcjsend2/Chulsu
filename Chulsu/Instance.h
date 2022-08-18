@@ -33,6 +33,8 @@ private:
 	UINT mRoughnessTextureIndex = UINT_MAX;
 	UINT mNormalMapTextureIndex = UINT_MAX;
 
+	UINT mSubMeshAttribStartIndex = UINT_MAX;
+
 	UINT mHitGroupIndex = UINT_MAX;
 
 	shared_ptr<Mesh> mMesh;

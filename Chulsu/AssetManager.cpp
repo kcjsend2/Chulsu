@@ -19,7 +19,7 @@ void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 
 	ThrowIfFailed(device->CreateDescriptorHeap(
 		&descHeapDescriptor,
-		IID_PPV_ARGS(&mSRVUAVDescriptorHeap)));
+		IID_PPV_ARGS(&mDescriptorHeap)));
 }
 
 ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
@@ -175,18 +175,18 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 
 void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
-	XMFLOAT3 v1, v2, v3;
-	v1 = { 0, 1, 0 };
-	v2 = { 0.866f, -0.5f, 0 };
-	v3 = { -0.866f, -0.5f, 0 };
+	Vertex v1, v2, v3;
+	v1.position = { 0, 1, 0 };
+	v2.position = { 0.866f, -0.5f, 0 };
+	v3.position = { -0.866f, -0.5f, 0 };
 
-	const XMFLOAT3 vertices[] = { v1, v2, v3 };
+	const Vertex vertices[] = { v1, v2, v3 };
 	const XMFLOAT3 positions[] = { {0, 0, 0}, {-2, 0, 0}, {2, 0, 0} };
 
 	shared_ptr<Instance> instance[3] = { make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>() };
 
 	SubMesh subMesh;
-	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(XMFLOAT3), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
+	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
 
 	vector<SubMesh> subMeshes;
 	subMeshes.push_back(subMesh);
@@ -208,7 +208,7 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
 {
-	auto cpuStart = mSRVUAVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	auto cpuStart = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	cpuStart.ptr += mCbvSrvUavDescriptorSize * index;
 
@@ -217,7 +217,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
 
 D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHandle(const UINT& index)
 {
-	auto gpuStart = mSRVUAVDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	auto gpuStart = mDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
 	gpuStart.ptr += mCbvSrvUavDescriptorSize * index;
 
@@ -327,7 +327,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 			D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
 			geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 			geomDesc.Triangles.VertexBuffer.StartAddress = (*j).GetVertexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
-			geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(XMFLOAT3);
+			geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
 			geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			geomDesc.Triangles.VertexCount = (*j).GetVertexCount();
 

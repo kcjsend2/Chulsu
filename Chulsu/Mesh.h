@@ -14,6 +14,8 @@ public:
 	void SetSubMesh(SubMesh subMesh) { mSubMeshes.push_back(subMesh); }
 	vector<SubMesh>& GetSubMeshes() { return mSubMeshes; }
 
+	const UINT& GetSubMeshCount() { return mSubMeshes.size(); }
+
 private:
 	vector<SubMesh> mSubMeshes;
 	AccelerationStructureBuffers mBLAS;

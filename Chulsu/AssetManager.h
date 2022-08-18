@@ -68,7 +68,7 @@ public:
 
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
 
-	ComPtr<ID3D12DescriptorHeap> GetDescriptorHeap() { return mSRVUAVDescriptorHeap; }
+	ComPtr<ID3D12DescriptorHeap> GetDescriptorHeap() { return mDescriptorHeap; }
 
 	UINT mCbvSrvUavDescriptorSize = 0;
 
@@ -82,7 +82,7 @@ private:
 
 	vector<ComPtr<D3D12MA::Allocation>> mUploadBuffers;
 
-	//EVERY Texture will store here for Bindless Resources Technique.
-	ComPtr<ID3D12DescriptorHeap> mSRVUAVDescriptorHeap;
+	//EVERY SRV/UAV/CBV will store here for Bindless Resources Technique.
+	ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
 	UINT mHeapCurrentIndex = 0;
 };

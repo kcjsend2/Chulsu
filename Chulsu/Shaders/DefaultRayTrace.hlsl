@@ -1,3 +1,14 @@
+#define UINT_MAX 0xffffffff
+
+struct VertexAttribute
+{
+    float3 position;
+    float3 normal;
+    float2 texCoord;
+    float3 tangent;
+    float3 biTangent;
+};
+
 float3 linearToSrgb(float3 c)
 {
     // Based on http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
@@ -53,7 +64,7 @@ void miss(inout RayPayload payload)
 void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-
+    
     const float3 A = float3(1, 0, 0);
     const float3 B = float3(0, 1, 0);
     const float3 C = float3(0, 0, 1);
