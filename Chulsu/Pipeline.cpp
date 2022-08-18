@@ -1,6 +1,7 @@
 #include "Pipeline.h"
 #include "SubObject.h"
 #include "AssetManager.h"
+#include "Instance.h"
 
 using namespace SubObject;
 
@@ -64,7 +65,7 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
 }
 
 void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc,
-    ResourceStateTracker tracker, AssetManager& assetMgr)
+    ResourceStateTracker& tracker, AssetManager& assetMgr)
 {
     /** The shader-table layout is as follows:
         Entry 0 - Ray-gen program
@@ -100,9 +101,17 @@ void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandLis
     // Entry 1 - miss program
     memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-    // Entry 2 - hit program
-    uint8_t* pHitEntry = pData + mShaderTableEntrySize * 2; // +2 skips the ray-gen and miss entries
-    memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+    const std::vector<std::shared_ptr<Instance>> instances = assetMgr.GetInstances();
+    // Entries 2-4 - The triangles' hit program. ProgramID and constant-buffer data
+    for (uint32_t i = 0; i < instances.size(); i++)
+    {
+        uint8_t* pHitEntry = pData + mShaderTableEntrySize * (i + 2); // +2 skips the ray-gen and miss entries
+        memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+        uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
+        assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+
+        *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = instances[i]->GetInstanceCB()->GetGPUVirtualAddress(0);
+    }
 
     // Unmap
     mShaderTable->GetResource()->Unmap(0, nullptr);

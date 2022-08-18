@@ -35,7 +35,7 @@ public:
 		XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
 
 	void LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker);
+		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHandle(const UINT& index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetIndexedGPUHandle(const UINT& index);
@@ -56,15 +56,25 @@ public:
 		const D3D12_SRV_DIMENSION& srvDimension, const D3D12_UAV_DIMENSION& uavDimension,
 		bool isSRV, bool isUAV);
 
-	void BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker);
+	// for Structured Buffer
+	UINT SetShaderResource(ID3D12Device5* device,
+		ID3D12GraphicsCommandList4* cmdList,
+		ComPtr<D3D12MA::Allocation> alloc,
+		const D3D12_SHADER_RESOURCE_VIEW_DESC& desc);
 
-	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker);
+	void SetConstantBuffer(ID3D12Device5* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC desc);
+
+	void BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker);
+
+	void BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker);
 
 	// We will move this function to scene class later.
-	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker, UINT& tlasSize);
+	void BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, UINT& tlasSize);
 
 	void PushUploadBuffer(ComPtr<D3D12MA::Allocation> alloc) { mUploadBuffers.push_back(alloc); }
 	void FreeUploadBuffers() { mUploadBuffers.clear(); }
+
+	const vector<shared_ptr<Instance>>& GetInstances() { return mInstances; }
 
 	AccelerationStructureBuffers GetTLAS() { return mTLAS; }
 

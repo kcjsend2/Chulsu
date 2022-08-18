@@ -5,7 +5,7 @@
 void Texture::LoadTextureFromDDS(
 	ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
-	D3D12MA::Allocator* d3dAllocator,
+	D3D12MA::Allocator* alloc,
 	ResourceStateTracker& tracker,
 	const std::wstring& filePath,
 	D3D12_RESOURCE_STATES resourceStates)
@@ -20,7 +20,7 @@ void Texture::LoadTextureFromDDS(
 	LoadDDSTextureFromFileEx(
 		device, filePath.c_str(), 0,
 		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT,
-		textureAlloc.Get(), d3dAllocator, ddsData, subresources, &alphaMode, &isCubeMap);
+		textureAlloc.Get(), alloc, ddsData, subresources, &alphaMode, &isCubeMap);
 
 	const UINT subresourcesCount = (UINT)subresources.size();
 	UINT64 bytes = GetRequiredIntermediateSize(mTextureBufferAlloc->GetResource(), 0, subresourcesCount);
@@ -33,7 +33,7 @@ void Texture::LoadTextureFromDDS(
 		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, bytes, 1, 1,
 		1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
-	d3dAllocator->CreateResource(
+	alloc->CreateResource(
 		&allocationDesc,
 		&resourceDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,

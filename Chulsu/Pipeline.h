@@ -8,7 +8,7 @@ class Pipeline
 public:
 	void CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* filename);
 	void CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker, AssetManager& assetMgr);
+		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr);
 
 	ComPtr<D3D12MA::Allocation> GetShaderTable() { return mShaderTable; }
 	ComPtr<ID3D12RootSignature> GetEmptyRootSignature() { return mEmptyRootSig; }

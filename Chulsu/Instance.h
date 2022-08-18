@@ -1,6 +1,19 @@
 #pragma once
 #include "stdafx.h"
+#include "Mesh.h"
 #include "SubMesh.h"
+#include "ConstantBuffer.h"
+
+struct InstanceConstant
+{
+	UINT AlbedoTextureIndex;
+	UINT MetalicTextureIndex;
+	UINT RoughnessTextureIndex;
+	UINT NormalMapTextureIndex;
+
+	UINT VertexAttribIndex;
+	UINT IndexBufferIndex;
+};
 
 class Instance
 {
@@ -18,10 +31,23 @@ public:
 
 	void Update();
 
+	void BuildConstantBuffer(
+		ID3D12Device5* device,
+		ID3D12GraphicsCommandList4* cmdList,
+		ComPtr<D3D12MA::Allocator> alloc,
+		ResourceStateTracker& tracker,
+		AssetManager& assetMgr);
+
+	std::shared_ptr<ConstantBuffer<InstanceConstant>> GetInstanceCB() { return mInstanceCB; }
+
 	const XMFLOAT4X4& GetWorldMatrix() { return mWorld; }
 	const UINT& GetHitGroupIndex() { return mHitGroupIndex; }
 
 private:
+	ComPtr<D3D12MA::Allocation> mConstantBufferAlloc;
+
+	std::shared_ptr<ConstantBuffer<InstanceConstant>> mInstanceCB;
+
 	XMFLOAT4X4 mWorld = {};
 
 	XMFLOAT3 mPosition = {0, 0, 0};
@@ -32,8 +58,6 @@ private:
 	UINT mMetalicTextureIndex = UINT_MAX;
 	UINT mRoughnessTextureIndex = UINT_MAX;
 	UINT mNormalMapTextureIndex = UINT_MAX;
-
-	UINT mSubMeshAttribStartIndex = UINT_MAX;
 
 	UINT mHitGroupIndex = UINT_MAX;
 

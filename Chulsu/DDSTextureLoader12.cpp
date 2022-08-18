@@ -1873,7 +1873,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
     D3D12_RESOURCE_FLAGS resFlags,
     unsigned int loadFlags,
     D3D12MA::Allocation* textureAlloc,
-    D3D12MA::Allocator* d3dAllocator,
+    D3D12MA::Allocator* alloc,
     std::unique_ptr<uint8_t[]>& ddsData,
     std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
     DDS_ALPHA_MODE* alphaMode,
@@ -1911,7 +1911,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
     hr = CreateTextureFromDDS(d3dDevice,
         header, bitData, bitSize, maxsize,
         resFlags, loadFlags,
-        textureAlloc, d3dAllocator, subresources, isCubeMap);
+        textureAlloc, alloc, subresources, isCubeMap);
 
     if (SUCCEEDED(hr))
     {

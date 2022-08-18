@@ -29,13 +29,13 @@ namespace SubObject
         desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
         desc.range[1].OffsetInDescriptorsFromTableStart = 0;
         
-        desc.rootParams.resize(1);
+        desc.rootParams.resize(2);
         desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
         desc.rootParams[0].DescriptorTable.NumDescriptorRanges = UINT(desc.range.size());
         desc.rootParams[0].DescriptorTable.pDescriptorRanges = desc.range.data();
 
         // Create the desc
-        desc.desc.NumParameters = 1;
+        desc.desc.NumParameters = 2;
         desc.desc.pParameters = desc.rootParams.data();
         desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
 
@@ -46,9 +46,14 @@ namespace SubObject
     {
         // Create the root-signature
         RootSignatureDesc desc;
+        desc.rootParams.resize(1);
+
+        desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        desc.rootParams[0].Constants.RegisterSpace = 0;
+        desc.rootParams[0].Constants.ShaderRegister = 0;
 
         // Create the desc
-        desc.desc.NumParameters = 0;
+        desc.desc.NumParameters = 1;
         desc.desc.pParameters = desc.rootParams.data();
         desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 

@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="D3D12MemAlloc.h" />
     <ClInclude Include="DDSTextureLoader12.h" />
     <ClInclude Include="Instance.h" />

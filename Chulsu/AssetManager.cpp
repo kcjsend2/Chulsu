@@ -154,6 +154,26 @@ void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 	}
 	shared_ptr<Mesh> mesh = make_shared<Mesh>(subMeshes);
 
+	UINT vertexBufferIndex = UINT_MAX;
+	for (int i = 0; i < subMeshes.size(); ++i)
+	{
+		if (i == 0)
+			vertexBufferIndex = SetShaderResource(device, cmdList, subMeshes[i].GetVertexBufferAlloc(), subMeshes[i].VertexShaderResourceView());
+		else
+			SetShaderResource(device, cmdList, subMeshes[i].GetVertexBufferAlloc(), subMeshes[i].VertexShaderResourceView());
+	}
+
+	UINT IndexBufferIndex = UINT_MAX;
+	for (int i = 0; i < subMeshes.size(); ++i)
+	{
+		if (i == 0)
+			IndexBufferIndex = SetShaderResource(device, cmdList, subMeshes[i].GetIndexBufferAlloc(), subMeshes[i].IndexShaderResourceView());
+		else
+			SetShaderResource(device, cmdList, subMeshes[i].GetIndexBufferAlloc(), subMeshes[i].IndexShaderResourceView());
+	}
+
+	mesh->SetVertexAttribIndex(vertexBufferIndex);
+	mesh->SetIndexBufferIndex(IndexBufferIndex);
 	mMeshMap[path] = mesh;
 }
 
@@ -173,7 +193,7 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 }
 
 
-void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
+void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr)
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
@@ -197,13 +217,15 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 	for (int i = 0; i < 3; ++i)
 	{
 		// TODO: Each Geometry needs index of fit HitGroup for render.
-		instance[i]->SetHitGroup(0);
 		instance[i]->SetMesh(mMeshMap["Triangle"]);
+		instance[i]->BuildConstantBuffer(device, cmdList, alloc, tracker, assetMgr);
 		instance[i]->SetPosition(positions[i]);
 		instance[i]->Update();
 		mInstances.push_back(instance[i]);
 	}
 
+	UINT vertexBufferIndex = SetShaderResource(device, cmdList, subMesh.GetVertexBufferAlloc(), subMesh.VertexShaderResourceView());
+	mMeshMap["Triangle"]->SetVertexAttribIndex(vertexBufferIndex);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
@@ -308,13 +330,33 @@ void AssetManager::SetTexture(ID3D12Device5* device,
 	mTextures[textureName] = newTexture;
 }
 
-void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker)
+UINT AssetManager::SetShaderResource(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocation> alloc, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc)
+{
+	auto bufferCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
+
+	device->CreateShaderResourceView(alloc->GetResource(), &desc, bufferCPUHandle);
+
+	mHeapCurrentIndex++;
+
+	return mHeapCurrentIndex;
+}
+
+void AssetManager::SetConstantBuffer(ID3D12Device5* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC desc)
+{
+	auto bufferCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
+
+	device->CreateConstantBufferView(&desc, bufferCPUHandle);
+
+	mHeapCurrentIndex++;
+}
+
+void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
 	BuildBLAS(device, cmdList, alloc, tracker);
 	BuildTLAS(device, cmdList, alloc, tracker, mTLASSize);
 }
 
-void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker)
+void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
 	std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescs;
 
@@ -378,7 +420,7 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	}
 }
 
-void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker, UINT& tlasSize)
+void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, UINT& tlasSize)
 {
 	// First, get the size of the TLAS buffers and create them
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -410,9 +452,8 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		transform = mInstances[i]->GetWorldMatrix();
 
 		instanceDescs[i].InstanceID = i;
-
-		//TODO: Instance must have HitGroupIndex. for now, 0 is okay (for single geometry)
-		instanceDescs[i].InstanceContributionToHitGroupIndex = mInstances[i]->GetHitGroupIndex();
+		mInstances[i]->SetHitGroup(i);
+		instanceDescs[i].InstanceContributionToHitGroupIndex = i;
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
 		memcpy(instanceDescs[i].Transform, &m, sizeof(instanceDescs[i].Transform));

@@ -19,7 +19,7 @@ public:
 	virtual ~SubMesh() {}
 
 	void InitializeBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker tracker, AssetManager& assetMgr, UINT vbStride, UINT ibStride,
+		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr, UINT vbStride, UINT ibStride,
 		D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
 
 	void SetBLAS(const AccelerationStructureBuffers& BLAS) { mBLAS = BLAS; }
@@ -30,6 +30,9 @@ public:
 
 	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc () { return mVertexBufferAlloc; }
 	ComPtr<D3D12MA::Allocation> GetIndexBufferAlloc() { return mIndexBufferAlloc; }
+
+	const D3D12_SHADER_RESOURCE_VIEW_DESC VertexShaderResourceView();
+	const D3D12_SHADER_RESOURCE_VIEW_DESC IndexShaderResourceView();
 
 private:
 	AccelerationStructureBuffers mBLAS;
