@@ -9,7 +9,13 @@ struct VertexAttribute
     float3 biTangent;
 };
 
-cbuffer InstanceCB : register(b0)
+cbuffer CommonCB : register(b0)
+{
+    uint ASIndex : packoffset(c0.x);
+    uint OutputTextureIndex : packoffset(c0.y);
+}
+
+cbuffer InstanceCB : register(b1)
 {
     uint AlbedoTextureIndex : packoffset(c0.x);
     uint MetalicTextureIndex : packoffset(c0.y);
@@ -20,15 +26,9 @@ cbuffer InstanceCB : register(b0)
     uint IndexBufferIndex : packoffset(c1.y);
 }
 
-cbuffer CommonCB : register(b1)
-{
-    uint ASIndex : packoffset(c0.x);
-    uint OutputTextureIndex : packoffset(c0.y);
-}
 
 float3 linearToSrgb(float3 c)
 {
-    // Based on http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
     float3 sq1 = sqrt(c);
     float3 sq2 = sqrt(sq1);
     float3 sq3 = sqrt(sq2);
@@ -82,9 +82,9 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 {
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
-    const float3 A = float3(1, 0, 0);
-    const float3 B = float3(0, 1, 0);
-    const float3 C = float3(0, 0, 1);
+    const float3 A = float3(AlbedoTextureIndex, 0, 0);
+    const float3 B = float3(0, 0, 0);
+    const float3 C = float3(0, 0, 0);
 
     payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
 }

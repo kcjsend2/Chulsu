@@ -16,7 +16,7 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
   //  2 for shader config (shared between all programs. 1 for the config, 1 for association)
   //  1 for pipeline config
   //  1 for the global root signature
-    std::array<D3D12_STATE_SUBOBJECT, 9> subobjects;
+    std::array<D3D12_STATE_SUBOBJECT, 10> subobjects;
     uint32_t index = 0;
 
     // Create the DXIL library
@@ -32,36 +32,44 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
     LocalRootSignature emptyRootSignature(device, emptyDesc);
     subobjects[index] = emptyRootSignature.subobject; // 2 Miss Root Sig
 
-    uint32_t emptyRootIndex = index++; // 2
-    const WCHAR* emptyRootSigExports[] = { kMissShader, kClosestHitShader, kRayGenShader };
-    ExportAssociation missRootAssociation(emptyRootSigExports, 1, &(subobjects[emptyRootIndex]));
-    subobjects[index++] = missRootAssociation.subobject; // 3 Associate Miss Root Sig to Miss Shader
+    uint32_t emptyRootIndex = index++; // 3
+    const WCHAR* emptyRootSigExports[] = { kMissShader, kRayGenShader };
+    ExportAssociation missRootAssociation(emptyRootSigExports, arraysize(emptyRootSigExports), &(subobjects[emptyRootIndex]));
+    subobjects[index++] = missRootAssociation.subobject; // 4 Associate Miss Root Sig to Miss Shader
+
+    // Create the hit root-signature and association
+    LocalRootSignature hitRootSignature(device, CreateHitRootDesc().desc);
+    subobjects[index] = hitRootSignature.subobject; // 5 Hit Root Sig
+
+    uint32_t hitRootIndex = index++; // 6
+    ExportAssociation hitRootAssociation(&kClosestHitShader, 1, &(subobjects[hitRootIndex]));
+    subobjects[index++] = hitRootAssociation.subobject; // 7 Associate Hit Root Sig to Hit Group
 
     // Bind the payload size to the programs
     ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 3);
     subobjects[index] = shaderConfig.subobject; // 4 Shader Config
 
-    uint32_t shaderConfigIndex = index++; // 5
+    uint32_t shaderConfigIndex = index++; // 8
     const WCHAR* shaderExports[] = { kMissShader, kClosestHitShader, kRayGenShader };
     ExportAssociation configAssociation(shaderExports, arraysize(shaderExports), &(subobjects[shaderConfigIndex]));
     subobjects[index++] = configAssociation.subobject; // 6 Associate Shader Config to shaders
 
     // Create the pipeline config
     PipelineConfig config(1);
-    subobjects[index++] = config.subobject; // 7
+    subobjects[index++] = config.subobject; // 9
 
     // Create the global root signature and store the empty signature
     GlobalRootSignature root(device, CreateGlobalRootDesc().desc);
     mGlobalRootSig = root.pRootSig;
-    subobjects[index++] = root.subobject; // 8
+    subobjects[index++] = root.subobject; // 10
 
     // Create the state
     D3D12_STATE_OBJECT_DESC desc;
-    desc.NumSubobjects = index; // 9
+    desc.NumSubobjects = index;
     desc.pSubobjects = subobjects.data();
     desc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
-    device->CreateStateObject(&desc, IID_PPV_ARGS(&mPipelineState));
+    ThrowIfFailed(device->CreateStateObject(&desc, IID_PPV_ARGS(&mPipelineState)));
 }
 
 void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc,

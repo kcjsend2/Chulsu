@@ -222,8 +222,8 @@ void DX12Renderer::Draw()
 
     mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetGlobalRootSignature().Get());
 
-    mCmdList->SetComputeRoot32BitConstant(1, mASIndex, 0);
-    mCmdList->SetComputeRoot32BitConstant(1, mOutputTextureIndex, 1);
+    mCmdList->SetComputeRoot32BitConstant(0, mASIndex, 0);
+    mCmdList->SetComputeRoot32BitConstant(0, mOutputTextureIndex, 1);
 
     // Dispatch
     mCmdList->SetPipelineState1(mPipelines["RayTracing"].GetStateObject().Get());

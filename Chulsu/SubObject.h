@@ -9,10 +9,11 @@ namespace SubObject
         std::vector<D3D12_ROOT_PARAMETER> rootParams;
     };
 
-    RootSignatureDesc CreateRayGenRootDesc()
+    RootSignatureDesc CreateGlobalRootDesc()
     {
         // Create the root-signature
         RootSignatureDesc desc;
+        desc.rootParams.resize(2);
         desc.range.resize(2);
 
         // gRtScene
@@ -28,34 +29,15 @@ namespace SubObject
         desc.range[1].RegisterSpace = 0;
         desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
         desc.range[1].OffsetInDescriptorsFromTableStart = 0;
-        
-        desc.rootParams.resize(2);
-        desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        desc.rootParams[0].DescriptorTable.NumDescriptorRanges = UINT(desc.range.size());
-        desc.rootParams[0].DescriptorTable.pDescriptorRanges = desc.range.data();
 
-        // Create the desc
-        desc.desc.NumParameters = 2;
-        desc.desc.pParameters = desc.rootParams.data();
-        desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
-
-        return desc;
-    }
-
-    RootSignatureDesc CreateGlobalRootDesc()
-    {
-        // Create the root-signature
-        RootSignatureDesc desc;
-        desc.rootParams.resize(2);
-
-        desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         desc.rootParams[0].Constants.RegisterSpace = 0;
         desc.rootParams[0].Constants.ShaderRegister = 0;
+        desc.rootParams[0].Constants.Num32BitValues = 2;
 
-        desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-        desc.rootParams[1].Constants.RegisterSpace = 0;
-        desc.rootParams[1].Constants.ShaderRegister = 1;
-        desc.rootParams[1].Constants.Num32BitValues = 2;
+        desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+        desc.rootParams[1].DescriptorTable.NumDescriptorRanges = UINT(desc.range.size());
+        desc.rootParams[1].DescriptorTable.pDescriptorRanges = desc.range.data();
 
         // Create the desc
         desc.desc.NumParameters = desc.rootParams.size();
@@ -70,8 +52,8 @@ namespace SubObject
         RootSignatureDesc desc;
         desc.rootParams.resize(1);
         desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        desc.rootParams[0].Descriptor.RegisterSpace = 0;
-        desc.rootParams[0].Descriptor.ShaderRegister = 0;
+        desc.rootParams[0].Constants.RegisterSpace = 0;
+        desc.rootParams[0].Constants.ShaderRegister = 1;
 
         desc.desc.NumParameters = 1;
         desc.desc.pParameters = desc.rootParams.data();
