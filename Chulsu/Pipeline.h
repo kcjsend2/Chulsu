@@ -11,7 +11,7 @@ public:
 		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr);
 
 	ComPtr<D3D12MA::Allocation> GetShaderTable() { return mShaderTable; }
-	ComPtr<ID3D12RootSignature> GetEmptyRootSignature() { return mEmptyRootSig; }
+	ComPtr<ID3D12RootSignature> GetGlobalRootSignature() { return mGlobalRootSig; }
 	ComPtr<ID3D12StateObject> GetStateObject() { return mPipelineState; }
 
 	UINT GetShaderTableEntrySize() { return mShaderTableEntrySize; }
@@ -22,5 +22,5 @@ protected:
 	ComPtr<D3D12MA::Allocation> mShaderTable = NULL;
 
 	ComPtr<ID3D12StateObject> mPipelineState = NULL;
-	ComPtr<ID3D12RootSignature> mEmptyRootSig = NULL;
+	ComPtr<ID3D12RootSignature> mGlobalRootSig = NULL;
 };

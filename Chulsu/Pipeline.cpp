@@ -52,7 +52,7 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
 
     // Create the global root signature and store the empty signature
     GlobalRootSignature root(device, CreateGlobalRootDesc().desc);
-    mEmptyRootSig = root.pRootSig;
+    mGlobalRootSig = root.pRootSig;
     subobjects[index++] = root.subobject; // 8
 
     // Create the state

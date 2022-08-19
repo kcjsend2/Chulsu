@@ -164,13 +164,17 @@ void DX12Renderer::BuildObjects()
     mAssetMgr.LoadTestTriangleInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 
-    mOutputResource = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
+    mASIndex = mAssetMgr.GetCurrentHeapIndex() - 1;
+
+    mOutputTexture = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
         D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-    mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputResource,
+    mAssetMgr.SetTexture(mDevice.Get(), mCmdList.Get(), mOutputTexture,
         L"OutputResource", {}, D3D12_UAV_DIMENSION_TEXTURE2D, false, true);
+
+    mOutputTextureIndex = mAssetMgr.GetCurrentHeapIndex() - 1;
 
     Pipeline pipeline;
     pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
@@ -190,7 +194,7 @@ void DX12Renderer::Draw()
     ID3D12DescriptorHeap* heaps[] = { mAssetMgr.GetDescriptorHeap().Get() };
     mCmdList->SetDescriptorHeaps(arraysize(heaps), heaps);
 
-    mResourceTracker.TransitionBarrier(mCmdList, mOutputResource->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    mResourceTracker.TransitionBarrier(mCmdList, mOutputTexture->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
     raytraceDesc.Width = mSwapChainSize.x;
@@ -216,17 +220,19 @@ void DX12Renderer::Draw()
     raytraceDesc.HitGroupTable.StrideInBytes = entrySize;
     raytraceDesc.HitGroupTable.SizeInBytes = entrySize * 3;
 
-    // Bind the empty root signature
-    mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetEmptyRootSignature().Get());
+    mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetGlobalRootSignature().Get());
+
+    mCmdList->SetComputeRoot32BitConstant(1, mASIndex, 0);
+    mCmdList->SetComputeRoot32BitConstant(1, mOutputTextureIndex, 1);
 
     // Dispatch
     mCmdList->SetPipelineState1(mPipelines["RayTracing"].GetStateObject().Get());
     mCmdList->DispatchRays(&raytraceDesc);
 
-    mResourceTracker.TransitionBarrier(mCmdList, mOutputResource->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE);
+    mResourceTracker.TransitionBarrier(mCmdList, mOutputTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE);
     mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST);
 
-    mCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), mOutputResource->GetResource());
+    mCmdList->CopyResource(mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), mOutputTexture->GetResource());
 
     mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT);
 

@@ -9,7 +9,7 @@ struct VertexAttribute
     float3 biTangent;
 };
 
-cbuffer RayTraceCB : register(b0)
+cbuffer InstanceCB : register(b0)
 {
     uint AlbedoTextureIndex : packoffset(c0.x);
     uint MetalicTextureIndex : packoffset(c0.y);
@@ -18,6 +18,12 @@ cbuffer RayTraceCB : register(b0)
 
     uint VertexAttribIndex : packoffset(c1.x);
     uint IndexBufferIndex : packoffset(c1.y);
+}
+
+cbuffer CommonCB : register(b1)
+{
+    uint ASIndex : packoffset(c0.x);
+    uint OutputTextureIndex : packoffset(c0.y);
 }
 
 float3 linearToSrgb(float3 c)
@@ -55,8 +61,8 @@ void rayGen()
     ray.TMax = 100000;
 
     RayPayload payload;
-    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[1];
-    RWTexture2D<float4> output = ResourceDescriptorHeap[2];
+    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[ASIndex];
+    RWTexture2D<float4> output = ResourceDescriptorHeap[OutputTextureIndex];
     
     TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
 

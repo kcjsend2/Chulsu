@@ -60,5 +60,8 @@ private:
 
 	unordered_map<string, Pipeline> mPipelines;
 
-	ComPtr<D3D12MA::Allocation> mOutputResource;
+	ComPtr<D3D12MA::Allocation> mOutputTexture;
+
+	UINT mOutputTextureIndex = UINT_MAX;
+	UINT mASIndex = UINT_MAX;
 };

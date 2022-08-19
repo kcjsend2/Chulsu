@@ -80,6 +80,8 @@ public:
 
 	ComPtr<ID3D12DescriptorHeap> GetDescriptorHeap() { return mDescriptorHeap; }
 
+	UINT GetCurrentHeapIndex() { return mHeapCurrentIndex; }
+
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 private:
