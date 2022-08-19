@@ -34,7 +34,7 @@ public:
 		D3D12MA::Allocator* alloc, ResourceStateTracker& tracker, const std::string& path,
 		XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
 
-	void LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
+	void LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHandle(const UINT& index);

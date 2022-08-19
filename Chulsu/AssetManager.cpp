@@ -193,7 +193,7 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 }
 
 
-void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr)
+void AssetManager::LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr)
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
@@ -203,7 +203,7 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 	const Vertex vertices[] = { v1, v2, v3 };
 	const XMFLOAT3 positions[] = { {0, 0, 0}, {-2, 0, 0}, {2, 0, 0} };
 
-	shared_ptr<Instance> instance[3] = { make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>() };
+	shared_ptr<Instance> instance[4] = { make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>() };
 
 	SubMesh subMesh;
 	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
@@ -216,7 +216,6 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 
 	for (int i = 0; i < 3; ++i)
 	{
-		// TODO: Each Geometry needs index of fit HitGroup for render.
 		instance[i]->SetMesh(mMeshMap["Triangle"]);
 		instance[i]->BuildConstantBuffer(device, cmdList, alloc, tracker, assetMgr);
 		instance[i]->SetPosition(positions[i]);
@@ -226,6 +225,32 @@ void AssetManager::LoadTestTriangleInstance(ID3D12Device5* device, ID3D12Graphic
 
 	UINT vertexBufferIndex = SetShaderResource(device, cmdList, subMesh.GetVertexBufferAlloc(), subMesh.VertexShaderResourceView());
 	mMeshMap["Triangle"]->SetVertexAttribIndex(vertexBufferIndex);
+
+	Vertex v4, v5, v6, v7, v8, v9;
+		
+	v4.position = { -100, -1, -2 };
+	v5.position = { 100, -1,  100 };
+	v6.position = { -100, -1,  100 };
+	v7.position = { -100, -1,  -2 };
+	v8.position = { 100, -1,  -2 };
+	v9.position = { 100, -1,  100 };
+
+	const Vertex planeVertices[] = { v4, v5, v6, v7, v8, v9 };
+
+	SubMesh planeSubMesh;
+	planeSubMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, planeVertices, 6, NULL, 0);
+
+	vector<SubMesh> planeSubMeshes;
+	planeSubMeshes.push_back(planeSubMesh);
+
+	auto planeMesh = make_shared<Mesh>(planeSubMeshes);
+	mMeshMap["Plane"] = planeMesh;
+
+	instance[3]->SetMesh(mMeshMap["Plane"]);
+	instance[3]->BuildConstantBuffer(device, cmdList, alloc, tracker, assetMgr);
+	instance[3]->SetPosition(positions[0]);
+	instance[3]->Update();
+	mInstances.push_back(instance[3]);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)

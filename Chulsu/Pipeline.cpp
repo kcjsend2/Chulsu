@@ -75,15 +75,6 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
 void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc,
     ResourceStateTracker& tracker, AssetManager& assetMgr)
 {
-    /** The shader-table layout is as follows:
-        Entry 0 - Ray-gen program
-        Entry 1 - Miss program
-        Entry 2 - Hit program
-        All entries in the shader-table must have the same size, so we will choose it base on the largest required entry.
-        The ray-gen program requires the largest entry - sizeof(program identifier) + 8 bytes for a descriptor-table.
-        The entry size must be aligned up to D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
-    */
-
     // Calculate the size and create the buffer
     mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     mShaderTableEntrySize += 8; // The ray-gen's descriptor table

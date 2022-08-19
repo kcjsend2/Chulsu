@@ -64,7 +64,7 @@ void rayGen()
     RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[ASIndex];
     RWTexture2D<float4> output = ResourceDescriptorHeap[OutputTextureIndex];
     
-    TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
+    TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 1, 0, ray, payload);
 
     float3 col = linearToSrgb(payload.color);
     output[launchIndex.xy] = float4(col, 1);
@@ -82,9 +82,9 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 {
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
-    const float3 A = float3(AlbedoTextureIndex, 0, 0);
-    const float3 B = float3(0, 0, 0);
-    const float3 C = float3(0, 0, 0);
+    const float3 A = float3(1, 0, 0);
+    const float3 B = float3(0, 1, 0);
+    const float3 C = float3(0, 0, 1);
 
     payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
 }

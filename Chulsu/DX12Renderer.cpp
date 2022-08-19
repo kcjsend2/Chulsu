@@ -161,7 +161,7 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::BuildObjects()
 {
-    mAssetMgr.LoadTestTriangleInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
+    mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 
     mASIndex = mAssetMgr.GetCurrentHeapIndex() - 1;
