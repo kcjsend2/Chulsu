@@ -477,7 +477,7 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 		transform = mInstances[i]->GetWorldMatrix();
 
 		instanceDescs[i].InstanceID = i;
-		mInstances[i]->SetHitGroup(i);
+		mInstances[i]->SetHitGroup(i * 2);
 		instanceDescs[i].InstanceContributionToHitGroupIndex = i * 2;
 		instanceDescs[i].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		XMFLOAT4X4 m = Matrix4x4::Transpose(transform);
