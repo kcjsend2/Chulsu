@@ -187,13 +187,14 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 
 	shared_ptr<Instance> instance = make_shared<Instance>(position, rotation, scale);
 	instance->SetMesh(mMeshMap[path]);
+	instance->BuildConstantBuffer(device, cmdList, alloc, tracker, *this);
 	instance->Update();
 
 	mInstances.push_back(instance);
 }
 
 
-void AssetManager::LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr)
+void AssetManager::LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
 	Vertex v1, v2, v3;
 	v1.position = { 0, 1, 0 };
@@ -217,7 +218,7 @@ void AssetManager::LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommand
 	for (int i = 0; i < 3; ++i)
 	{
 		instance[i]->SetMesh(mMeshMap["Triangle"]);
-		instance[i]->BuildConstantBuffer(device, cmdList, alloc, tracker, assetMgr);
+		instance[i]->BuildConstantBuffer(device, cmdList, alloc, tracker, *this);
 		instance[i]->SetPosition(positions[i]);
 		instance[i]->Update();
 		mInstances.push_back(instance[i]);
@@ -247,7 +248,7 @@ void AssetManager::LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommand
 	mMeshMap["Plane"] = planeMesh;
 
 	instance[3]->SetMesh(mMeshMap["Plane"]);
-	instance[3]->BuildConstantBuffer(device, cmdList, alloc, tracker, assetMgr);
+	instance[3]->BuildConstantBuffer(device, cmdList, alloc, tracker, *this);
 	instance[3]->SetPosition(positions[0]);
 	instance[3]->Update();
 	mInstances.push_back(instance[3]);

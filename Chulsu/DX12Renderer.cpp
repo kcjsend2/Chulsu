@@ -155,12 +155,13 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
     mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
     mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-    mAssetMgr.Init(mDevice.Get(), 256);
+    mAssetMgr.Init(mDevice.Get(), 2048);
     mAssetMgr.mCbvSrvUavDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DX12Renderer::BuildObjects()
 {
+    //mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3());
     mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 

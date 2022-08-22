@@ -35,7 +35,7 @@ public:
 		XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale);
 
 	void LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr);
+		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHandle(const UINT& index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetIndexedGPUHandle(const UINT& index);
