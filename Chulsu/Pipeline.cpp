@@ -7,35 +7,31 @@ using namespace SubObject;
 
 void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* filename)
 {
-    // Need 12 subobjects:
-  //  1 for DXIL library
-  //  1 for the hit-group
-  //  2 for RayGen root-signature (root-signature and the subobject association)
-  //  2 for hit-program root-signature (root-signature and the subobject association)
-  //  2 for miss-shader root-signature (signature and association)
-  //  2 for shader config (shared between all programs. 1 for the config, 1 for association)
-  //  1 for pipeline config
-  //  1 for the global root signature
-    std::array<D3D12_STATE_SUBOBJECT, 10> subobjects;
+    std::array<D3D12_STATE_SUBOBJECT, 11> subobjects;
     uint32_t index = 0;
 
     // Create the DXIL library
-    DxilLibrary dxilLib = CreateDxilLibrary(filename);
+
+    const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader, kShadowClosestHitShader, kShadowMissShader };
+    DxilLibrary dxilLib = CreateDxilLibrary(filename, entryPoints, arraysize(entryPoints));
     subobjects[index++] = dxilLib.stateSubobject; // 0 Library
 
     HitProgram hitProgram(nullptr, kClosestHitShader, kHitGroup);
     subobjects[index++] = hitProgram.subObject; // 1 Hit Group
 
+    HitProgram shadowHitProgram(nullptr, kShadowClosestHitShader, kShadowHitGroup);
+    subobjects[index++] = shadowHitProgram.subObject; // 2 Hit Group
+
     // Create the miss root-signature and association
     D3D12_ROOT_SIGNATURE_DESC emptyDesc = {};
     emptyDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
     LocalRootSignature emptyRootSignature(device, emptyDesc);
-    subobjects[index] = emptyRootSignature.subobject; // 2 Miss Root Sig
+    subobjects[index] = emptyRootSignature.subobject; // 3 Miss Root Sig
 
     uint32_t emptyRootIndex = index++; // 3
-    const WCHAR* emptyRootSigExports[] = { kMissShader, kRayGenShader };
-    ExportAssociation missRootAssociation(emptyRootSigExports, arraysize(emptyRootSigExports), &(subobjects[emptyRootIndex]));
-    subobjects[index++] = missRootAssociation.subobject; // 4 Associate Miss Root Sig to Miss Shader
+    const WCHAR* emptyRootSigExports[] = { kMissShader, kRayGenShader, kShadowMissShader, kShadowClosestHitShader };
+    ExportAssociation emptyRootAssociation(emptyRootSigExports, arraysize(emptyRootSigExports), &(subobjects[emptyRootIndex]));
+    subobjects[index++] = emptyRootAssociation.subobject; // 4 Associate Miss Root Sig to Miss Shader
 
     // Create the hit root-signature and association
     LocalRootSignature hitRootSignature(device, CreateHitRootDesc().desc);
@@ -47,15 +43,15 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
 
     // Bind the payload size to the programs
     ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 3);
-    subobjects[index] = shaderConfig.subobject; // 4 Shader Config
+    subobjects[index] = shaderConfig.subobject; // 7 Shader Config
 
     uint32_t shaderConfigIndex = index++; // 8
-    const WCHAR* shaderExports[] = { kMissShader, kClosestHitShader, kRayGenShader };
+    const WCHAR* shaderExports[] = { kMissShader, kClosestHitShader, kRayGenShader, kShadowMissShader, kShadowClosestHitShader };
     ExportAssociation configAssociation(shaderExports, arraysize(shaderExports), &(subobjects[shaderConfigIndex]));
     subobjects[index++] = configAssociation.subobject; // 6 Associate Shader Config to shaders
 
     // Create the pipeline config
-    PipelineConfig config(1);
+    PipelineConfig config(3);
     subobjects[index++] = config.subobject; // 9
 
     // Create the global root signature and store the empty signature
@@ -79,7 +75,7 @@ void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandLis
     mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
     mShaderTableEntrySize += 8; // The ray-gen's descriptor table
     mShaderTableEntrySize = align_to(D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT, mShaderTableEntrySize);
-    uint32_t shaderTableSize = mShaderTableEntrySize * 5;
+    uint32_t shaderTableSize = mShaderTableEntrySize * 11;
 
     mShaderTable = assetMgr.CreateResource(device, cmdList, alloc, tracker, NULL,
         shaderTableSize, 1, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_DIMENSION_BUFFER,
@@ -92,24 +88,24 @@ void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandLis
     ComPtr<ID3D12StateObjectProperties> pRtsoProps;
     mPipelineState->QueryInterface(IID_PPV_ARGS(&pRtsoProps));
 
-    // Entry 0 - ray-gen program ID and descriptor data
     memcpy(pData, pRtsoProps->GetShaderIdentifier(kRayGenShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
     uint64_t heapStart = assetMgr.GetIndexedGPUHandle(0).ptr;
     *(uint64_t*)(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStart;
 
-    // Entry 1 - miss program
     memcpy(pData + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
+    memcpy(pData + mShaderTableEntrySize * 2 , pRtsoProps->GetShaderIdentifier(kShadowMissShader), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
     const std::vector<std::shared_ptr<Instance>> instances = assetMgr.GetInstances();
-    // Entries 2-4 - The triangles' hit program. ProgramID and constant-buffer data
     for (uint32_t i = 0; i < instances.size(); i++)
     {
-        uint8_t* pHitEntry = pData + mShaderTableEntrySize * (i + 2); // +2 skips the ray-gen and miss entries
+        uint8_t* pHitEntry = pData + mShaderTableEntrySize * ((i * 2) + 3); // +3 skips the ray-gen and miss entries, *2 for two Hit Group.
         memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
         uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
         assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
-
         *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = instances[i]->GetInstanceCB()->GetGPUVirtualAddress(0);
+
+        memcpy(pHitEntry + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kShadowHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
     }
 
     // Unmap

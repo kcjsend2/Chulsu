@@ -98,10 +98,15 @@ namespace SubObject
         std::vector<std::wstring> exportName;
     };
 
-    static const WCHAR* kRayGenShader = L"rayGen";
-    static const WCHAR* kMissShader = L"miss";
-    static const WCHAR* kClosestHitShader = L"chs";
+    static const WCHAR* kRayGenShader = L"RayGen";
+
+    static const WCHAR* kMissShader = L"Miss";
+    static const WCHAR* kClosestHitShader = L"ClosestHit";
     static const WCHAR* kHitGroup = L"HitGroup";
+
+    static const WCHAR* kShadowMissShader = L"ShadowMiss";
+    static const WCHAR* kShadowClosestHitShader = L"ShadowClosestHit";
+    static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
     ComPtr<IDxcBlob> CompileLibrary(const WCHAR* filename, const WCHAR* targetString)
     {
@@ -151,12 +156,11 @@ namespace SubObject
         return blob;
     }
 
-    DxilLibrary CreateDxilLibrary(const WCHAR* filename)
+    DxilLibrary CreateDxilLibrary(const WCHAR* filename, const WCHAR* entryPoints[], uint32_t arraySize)
     {
         // Compile the shader
         ComPtr<IDxcBlob> pDxilLib = CompileLibrary(filename, L"lib_6_6");
-        const WCHAR* entryPoints[] = { kRayGenShader, kMissShader, kClosestHitShader };
-        return DxilLibrary(pDxilLib, entryPoints, arraysize(entryPoints));
+        return DxilLibrary(pDxilLib, entryPoints, arraySize);
     }
 
 

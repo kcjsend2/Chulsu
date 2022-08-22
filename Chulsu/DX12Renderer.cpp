@@ -210,15 +210,15 @@ void DX12Renderer::Draw()
 
     // Miss is the second entry in the shader-table
     size_t missOffset = 1 * entrySize;
-    raytraceDesc.MissShaderTable.StartAddress = mPipelines["RayTracing"].GetShaderTable()->GetResource()->GetGPUVirtualAddress() + missOffset;
+    raytraceDesc.MissShaderTable.StartAddress = shaderTable->GetGPUVirtualAddress() + missOffset;
     raytraceDesc.MissShaderTable.StrideInBytes = entrySize;
-    raytraceDesc.MissShaderTable.SizeInBytes = entrySize;
+    raytraceDesc.MissShaderTable.SizeInBytes = entrySize * 2;
 
     // Hit is the third entry in the shader-table
-    size_t hitOffset = 2 * entrySize;
+    size_t hitOffset = 3 * entrySize;
     raytraceDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + hitOffset;
     raytraceDesc.HitGroupTable.StrideInBytes = entrySize;
-    raytraceDesc.HitGroupTable.SizeInBytes = entrySize * 3;
+    raytraceDesc.HitGroupTable.SizeInBytes = entrySize * mAssetMgr.GetInstances().size() * 2;
 
     mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetGlobalRootSignature().Get());
 

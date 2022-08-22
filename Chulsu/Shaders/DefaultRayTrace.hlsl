@@ -42,7 +42,7 @@ struct RayPayload
 };
 
 [shader("raygeneration")]
-void rayGen()
+void RayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
@@ -64,27 +64,65 @@ void rayGen()
     RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[ASIndex];
     RWTexture2D<float4> output = ResourceDescriptorHeap[OutputTextureIndex];
     
-    TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 1, 0, ray, payload);
+    TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
 
     float3 col = linearToSrgb(payload.color);
     output[launchIndex.xy] = float4(col, 1);
 
 }
 
+struct ShadowPayload
+{
+    bool hit;
+};
+
 [shader("miss")]
-void miss(inout RayPayload payload)
+void Miss(inout RayPayload payload)
 {
     payload.color = float3(0.4, 0.6, 0.2);
 }
 
 [shader("closesthit")]
-void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    float hitT = RayTCurrent();
+    float3 rayDirW = WorldRayDirection();
+    float3 rayOriginW = WorldRayOrigin();
+    
+    // Find the world-space hit position
+    float3 posW = rayOriginW + hitT * rayDirW;
+    
+    RayDesc ray;
+    ray.Origin = posW;
+    ray.Direction = normalize(float3(0.5, 0.5, -0.5));
+    ray.TMin = 0.01;
+    ray.TMax = 100000;
+    
+    ShadowPayload shadowPayload;
+    
+    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[ASIndex];
+    
+    TraceRay(rtScene, 0, 0xFFFFFFFF, 1, 0, 1, ray, shadowPayload);
+    
+    float factor = shadowPayload.hit ? 0.1 : 1.0;
+    
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
     const float3 A = float3(1, 0, 0);
     const float3 B = float3(0, 1, 0);
     const float3 C = float3(0, 0, 1);
 
-    payload.color = A * barycentrics.x + B * barycentrics.y + C * barycentrics.z;
+    payload.color = (A * barycentrics.x + B * barycentrics.y + C * barycentrics.z) * factor;
+}
+
+[shader("closesthit")]
+void ShadowClosestHit(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    payload.hit = true;
+}
+
+[shader("miss")]
+void ShadowMiss(inout ShadowPayload payload)
+{
+    payload.hit = false;
 }
