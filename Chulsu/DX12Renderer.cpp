@@ -161,8 +161,8 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::BuildObjects()
 {
-    //mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3());
-    mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
+    mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3());
+    //mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 
     mASIndex = mAssetMgr.GetCurrentHeapIndex() - 1;
