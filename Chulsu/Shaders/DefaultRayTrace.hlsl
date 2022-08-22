@@ -1,5 +1,7 @@
 #define UINT_MAX 0xffffffff
 
+RaytracingAccelerationStructure gRtScene : register(t0);
+
 struct VertexAttribute
 {
     float3 position;
@@ -11,8 +13,7 @@ struct VertexAttribute
 
 cbuffer CommonCB : register(b0)
 {
-    uint ASIndex : packoffset(c0.x);
-    uint OutputTextureIndex : packoffset(c0.y);
+    uint OutputTextureIndex : packoffset(c0.x);
 }
 
 cbuffer InstanceCB : register(b1)
@@ -61,10 +62,9 @@ void RayGen()
     ray.TMax = 100000;
 
     RayPayload payload;
-    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[ASIndex];
     RWTexture2D<float4> output = ResourceDescriptorHeap[OutputTextureIndex];
     
-    TraceRay(rtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
+    TraceRay(gRtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
 
     float3 col = linearToSrgb(payload.color);
     output[launchIndex.xy] = float4(col, 1);
@@ -100,9 +100,7 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     ShadowPayload shadowPayload;
     
-    RaytracingAccelerationStructure rtScene = ResourceDescriptorHeap[ASIndex];
-    
-    TraceRay(rtScene, 0, 0xFFFFFFFF, 1, 0, 1, ray, shadowPayload);
+    TraceRay(gRtScene, 0, 0xFFFFFFFF, 1, 0, 1, ray, shadowPayload);
     
     float factor = shadowPayload.hit ? 0.1 : 1.0;
     

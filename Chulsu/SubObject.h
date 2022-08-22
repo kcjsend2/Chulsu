@@ -14,30 +14,15 @@ namespace SubObject
         // Create the root-signature
         RootSignatureDesc desc;
         desc.rootParams.resize(2);
-        desc.range.resize(2);
-
-        // gRtScene
-        desc.range[0].BaseShaderRegister = 0;
-        desc.range[0].NumDescriptors = 1;
-        desc.range[0].RegisterSpace = 0;
-        desc.range[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-        desc.range[0].OffsetInDescriptorsFromTableStart = 0;
-
-        // gOutput
-        desc.range[1].BaseShaderRegister = 0;
-        desc.range[1].NumDescriptors = 1;
-        desc.range[1].RegisterSpace = 0;
-        desc.range[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-        desc.range[1].OffsetInDescriptorsFromTableStart = 0;
 
         desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         desc.rootParams[0].Constants.RegisterSpace = 0;
         desc.rootParams[0].Constants.ShaderRegister = 0;
-        desc.rootParams[0].Constants.Num32BitValues = 2;
+        desc.rootParams[0].Constants.Num32BitValues = 1;
 
-        desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-        desc.rootParams[1].DescriptorTable.NumDescriptorRanges = UINT(desc.range.size());
-        desc.rootParams[1].DescriptorTable.pDescriptorRanges = desc.range.data();
+        desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+        desc.rootParams[1].Descriptor.RegisterSpace = 0;
+        desc.rootParams[1].Descriptor.ShaderRegister = 0;
 
         // Create the desc
         desc.desc.NumParameters = desc.rootParams.size();

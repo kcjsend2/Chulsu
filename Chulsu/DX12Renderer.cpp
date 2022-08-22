@@ -161,11 +161,9 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::BuildObjects()
 {
-    mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3());
-    //mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    //mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/sphere.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3());
+    mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
-
-    mASIndex = mAssetMgr.GetCurrentHeapIndex() - 1;
 
     mOutputTexture = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
@@ -223,8 +221,8 @@ void DX12Renderer::Draw()
 
     mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetGlobalRootSignature().Get());
 
-    mCmdList->SetComputeRoot32BitConstant(0, mASIndex, 0);
-    mCmdList->SetComputeRoot32BitConstant(0, mOutputTextureIndex, 1);
+    mCmdList->SetComputeRoot32BitConstant(0, mOutputTextureIndex, 0);
+    mCmdList->SetComputeRootShaderResourceView(1, mAssetMgr.GetTLAS().mResult->GetResource()->GetGPUVirtualAddress());
 
     // Dispatch
     mCmdList->SetPipelineState1(mPipelines["RayTracing"].GetStateObject().Get());

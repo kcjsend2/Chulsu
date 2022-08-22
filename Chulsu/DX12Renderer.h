@@ -63,5 +63,4 @@ private:
 	ComPtr<D3D12MA::Allocation> mOutputTexture;
 
 	UINT mOutputTextureIndex = UINT_MAX;
-	UINT mASIndex = UINT_MAX;
 };

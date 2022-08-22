@@ -508,8 +508,4 @@ void AssetManager::BuildTLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.RaytracingAccelerationStructure.Location = mTLAS.mResult->GetResource()->GetGPUVirtualAddress();
-
-	//Currently just do this...
-	device->CreateShaderResourceView(nullptr, &srvDesc, GetIndexedCPUHandle(mHeapCurrentIndex));
-	mHeapCurrentIndex++;
 }
