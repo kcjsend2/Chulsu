@@ -257,3 +257,199 @@ namespace Matrix4x4
 		return world;
 	}
 }
+
+namespace Vector3
+{
+	inline float Distance(const XMFLOAT3& v1, const XMFLOAT3& v2)
+	{
+		return (float)sqrt(pow(v1.x - v2.x, 2) + pow(v1.y - v2.y, 2) + pow(v1.z - v2.z, 2));
+	}
+
+	inline XMFLOAT3 Zero()
+	{
+		return XMFLOAT3(0.0f, 0.0f, 0.0f);
+	}
+
+	inline XMFLOAT3 VectorToFloat3(FXMVECTOR& vector)
+	{
+		XMFLOAT3 ret;
+		XMStoreFloat3(&ret, vector);
+		return ret;
+	}
+
+	inline XMFLOAT3 Replicate(float value)
+	{
+		return VectorToFloat3(XMVectorReplicate(value));
+	}
+
+	inline XMFLOAT3 Multiply(float scalar, const XMFLOAT3& v)
+	{
+		XMFLOAT3 ret;
+		XMStoreFloat3(&ret, scalar * XMLoadFloat3(&v));
+		return ret;
+	}
+
+	inline XMFLOAT3 Multiply(const XMFLOAT3& v1, const XMFLOAT3& v2)
+	{
+		return XMFLOAT3(v1.x * v2.x, v1.y * v2.y, v1.z * v2.z);
+	}
+
+	inline XMFLOAT3 Divide(float scalar, XMFLOAT3& v)
+	{
+		XMFLOAT3 ret;
+		XMStoreFloat3(&ret, XMLoadFloat3(&v) / scalar);
+		return ret;
+	}
+
+	inline XMFLOAT3 MultiplyAdd(float delta, const XMFLOAT3& src, const XMFLOAT3& dst)
+	{
+		auto v = Replicate(delta);
+		XMVECTOR v1 = XMLoadFloat3(&v);
+		XMVECTOR v2 = XMLoadFloat3(&src);
+		XMVECTOR v3 = XMLoadFloat3(&dst);
+		return VectorToFloat3(XMVectorMultiplyAdd(v1, v2, v3));
+	}
+
+	inline XMFLOAT3 TransformNormal(XMFLOAT3& src, FXMMATRIX& mat)
+	{
+		return VectorToFloat3(XMVector3TransformNormal(XMLoadFloat3(&src), mat));
+	}
+
+	inline XMFLOAT3 Transform(XMFLOAT3& src, FXMMATRIX& mat)
+	{
+		return VectorToFloat3(XMVector3Transform(XMLoadFloat3(&src), mat));
+	}
+
+	inline XMFLOAT3 TransformCoord(XMFLOAT3& src, XMFLOAT4X4& mat)
+	{
+		return VectorToFloat3(XMVector3TransformCoord(XMLoadFloat3(&src), XMLoadFloat4x4(&mat)));
+	}
+
+	inline XMFLOAT3 Normalize(XMFLOAT3& v)
+	{
+		return VectorToFloat3(XMVector3Normalize(XMLoadFloat3(&v)));
+	}
+
+	inline XMFLOAT3 Normalize(XMFLOAT3&& v)
+	{
+		return VectorToFloat3(XMVector3Normalize(XMLoadFloat3(&v)));
+	}
+
+	inline XMFLOAT3 Subtract(const XMFLOAT3& v1, const XMFLOAT3& v2)
+	{
+		return VectorToFloat3(XMVectorSubtract(XMLoadFloat3(&v1), XMLoadFloat3(&v2)));
+	}
+
+	inline XMFLOAT3 ScalarProduct(const XMFLOAT3& v, float scalar)
+	{
+		return VectorToFloat3(XMLoadFloat3(&v) * scalar);
+	}
+
+	inline XMFLOAT3 Cross(const XMFLOAT3& v1, const XMFLOAT3& v2)
+	{
+		return VectorToFloat3(XMVector3Cross(XMLoadFloat3(&v1), XMLoadFloat3(&v2)));
+	}
+
+	inline float Length(const XMFLOAT3& v)
+	{
+		XMFLOAT3 ret = VectorToFloat3(XMVector3Length(XMLoadFloat3(&v)));
+		return ret.x;
+	}
+
+	inline float Dot(const XMFLOAT3& v1, const XMFLOAT3& v2)
+	{
+		return XMVectorGetX(XMVector3Dot(XMLoadFloat3(&v1), XMLoadFloat3(&v2)));
+	}
+
+	inline XMFLOAT3 Add(const XMFLOAT3& v, float value)
+	{
+		return VectorToFloat3(XMVectorAdd(XMLoadFloat3(&v), XMVectorReplicate(value)));
+	}
+
+	inline XMFLOAT3 Add(const XMFLOAT3& v1, const XMFLOAT3& v2)
+	{
+		return VectorToFloat3(XMLoadFloat3(&v1) + XMLoadFloat3(&v2));
+	}
+
+	inline XMFLOAT3 Add(const XMFLOAT3& v1, const XMFLOAT3& v2, float distance)
+	{
+		return VectorToFloat3(XMLoadFloat3(&v1) + XMLoadFloat3(&v2) * distance);
+	}
+
+	inline XMFLOAT3 ClampFloat3(const XMFLOAT3& input, const XMFLOAT3& min, const XMFLOAT3& max)
+	{
+		XMFLOAT3 ret;
+		ret.x = (min.x > input.x) ? min.x : ((max.x < input.x) ? max.x : input.x);
+		ret.y = (min.y > input.y) ? min.y : ((max.y < input.y) ? max.y : input.y);
+		ret.z = (min.z > input.z) ? min.z : ((max.z < input.z) ? max.z : input.z);
+		return ret;
+	}
+
+	inline XMFLOAT3 Absf(XMFLOAT3& v)
+	{
+		return XMFLOAT3(std::abs(v.x), std::abs(v.y), std::abs(v.z));
+	}
+
+	inline bool Equal(XMFLOAT3& v1, XMFLOAT3& v2)
+	{
+		return XMVector3Equal(XMLoadFloat3(&v1), XMLoadFloat3(&v2));
+	}
+
+	inline bool Less(XMFLOAT3& v, float x)
+	{
+		return XMVector3Less(XMLoadFloat3(&v), XMVectorReplicate(x));
+	}
+
+	inline XMFLOAT3 Lerp(const XMFLOAT3& from, const XMFLOAT3& to, float t)
+	{
+		return VectorToFloat3(XMVectorLerp(XMLoadFloat3(&from), XMLoadFloat3(&to), t));
+	}
+}
+
+namespace Vector4
+{
+	inline XMFLOAT4 Zero()
+	{
+		return XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
+	inline bool Equal(XMFLOAT4& v1, XMFLOAT4& v2)
+	{
+		return XMVector4Equal(XMLoadFloat4(&v1), XMLoadFloat4(&v2));
+	}
+
+	inline XMFLOAT4 Add(XMFLOAT4& v1, XMFLOAT4& v2)
+	{
+		XMFLOAT4 ret;
+		XMStoreFloat4(&ret, XMVectorAdd(XMLoadFloat4(&v1), XMLoadFloat4(&v2)));
+		return ret;
+	}
+
+	inline XMFLOAT4 Multiply(float scalar, XMFLOAT4& v)
+	{
+		XMFLOAT4 ret;
+		XMStoreFloat4(&ret, scalar * XMLoadFloat4(&v));
+		return ret;
+	}
+
+	inline XMFLOAT4 RotateQuaternionAxis(const XMFLOAT3& axis, float angle)
+	{
+		XMFLOAT4 ret;
+		XMStoreFloat4(&ret, XMQuaternionRotationAxis(XMLoadFloat3(&axis), angle));
+		return ret;
+	}
+
+	inline XMFLOAT4 RotateQuaternionRollPitchYaw(const XMFLOAT3& rotation)
+	{
+		XMFLOAT4 ret;
+		XMStoreFloat4(&ret, XMQuaternionRotationRollPitchYaw(rotation.x, rotation.y, rotation.z));
+		return ret;
+	}
+
+	inline XMFLOAT4 Slerp(const XMFLOAT4& from, const XMFLOAT4& to, float t)
+	{
+		XMFLOAT4 ret;
+		XMStoreFloat4(&ret, XMQuaternionSlerp(XMLoadFloat4(&from), XMLoadFloat4(&to), t));
+		return ret;
+	}
+}
