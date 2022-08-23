@@ -6,9 +6,8 @@ cbuffer FrameCB : register(b0)
 {
     uint OutputTextureIndex : packoffset(c0.x);
     uint2 ScreenResolution : packoffset(c0.y);
-    matrix gInvView : packoffset(c1);
-    matrix gInvProj : packoffset(c5);
-    float3 gCameraPos : packoffset(c9);
+    matrix gInvViewProj : packoffset(c1);
+    float3 gCameraPos : packoffset(c5);
 }
 
 cbuffer InstanceCB : register(b1)
@@ -31,16 +30,16 @@ struct VertexAttribute
     float3 biTangent;
 };
 
-float3 GetWorldPosition(float2 texcoord, float depth)
-{
-    float4 clipSpaceLocation;
-    clipSpaceLocation.xy = texcoord * 2.0f - 1.0f;
-    clipSpaceLocation.y *= -1;
-    clipSpaceLocation.z = depth;
-    clipSpaceLocation.w = 1.0f;
-    float4 homogenousLocation = mul(clipSpaceLocation, gInvProj);
-    return homogenousLocation.xyz / homogenousLocation.w;
-}
+//float3 GetWorldPosition(float2 texcoord, float depth)
+//{
+//    float4 clipSpaceLocation;
+//    clipSpaceLocation.xy = texcoord * 2.0f - 1.0f;
+//    clipSpaceLocation.y *= -1;
+//    clipSpaceLocation.z = depth;
+//    clipSpaceLocation.w = 1.0f;
+//    float4 homogenousLocation = mul(clipSpaceLocation, gInvProj);
+//    return homogenousLocation.xyz / homogenousLocation.w;
+//}
 
 float3 linearToSrgb(float3 c)
 {
@@ -49,6 +48,25 @@ float3 linearToSrgb(float3 c)
     float3 sq3 = sqrt(sq2);
     float3 srgb = 0.662002687 * sq1 + 0.684122060 * sq2 - 0.323583601 * sq3 - 0.0225411470 * c;
     return srgb;
+}
+
+inline RayDesc GenerateCameraRay(uint2 index, in float3 cameraPosition, in float4x4 invViewProj)
+{
+    float2 xy = index + 0.5f; // center in the middle of the pixel.
+    float2 screenPos = xy / DispatchRaysDimensions().xy * 2.0 - 1.0;
+
+    // Invert Y for DirectX-style coordinates.
+    screenPos.y = -screenPos.y;
+
+    // Unproject the pixel coordinate into a world positon.
+    float4 world = mul(float4(screenPos, 0, 1), invViewProj);
+    world.xyz /= world.w;
+
+    RayDesc ray;
+    ray.Origin = cameraPosition;
+    ray.Direction = normalize(world.xyz - ray.Origin);
+
+    return ray;
 }
 
 struct RayPayload
@@ -68,9 +86,8 @@ void RayGen()
     float2 d = ((crd / dims) * 2.f - 1.f);
     float aspectRatio = dims.x / dims.y;
     
-    RayDesc ray;
-    ray.Origin = gCameraPos;
-    ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
+    
+    RayDesc ray = GenerateCameraRay(launchIndex.xy, gCameraPos, gInvViewProj);
 
     ray.TMin = 0;
     ray.TMax = 100000;

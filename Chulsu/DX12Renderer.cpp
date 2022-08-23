@@ -322,8 +322,8 @@ void DX12Renderer::OnPreciseKeyInput()
 
 void DX12Renderer::Update()
 {
-    mCamera.Update(mDeltaTime);
     OnPreciseKeyInput();
+    mCamera.Update(mDeltaTime);
 }
 
 void DX12Renderer::Draw()
@@ -368,13 +368,10 @@ void DX12Renderer::Draw()
 
     mCmdList->SetComputeRoot32BitConstant(0, mOutputTextureIndex, 0);
 
-    auto mat = mCamera.GetInverseView();
+    auto mat = Matrix4x4::Transpose(Matrix4x4::Inverse(Matrix4x4::Multiply(mCamera.GetView(), mCamera.GetProj())));
     mCmdList->SetComputeRoot32BitConstants(0, 16, &mat, 4);
 
-    mat = mCamera.GetInverseProj();
-    mCmdList->SetComputeRoot32BitConstants(0, 16, &mat, 20);
-
-    mCmdList->SetComputeRoot32BitConstants(0, 3, &mCamera.GetPosition(), 36);
+    mCmdList->SetComputeRoot32BitConstants(0, 3, &mCamera.GetPosition(), 20);
 
     mCmdList->SetComputeRootShaderResourceView(1, mAssetMgr.GetTLAS().mResult->GetResource()->GetGPUVirtualAddress());
 

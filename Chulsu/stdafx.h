@@ -211,6 +211,13 @@ namespace Matrix4x4
 		return ret;
 	}
 
+	inline XMFLOAT4X4 Inverse(const XMFLOAT4X4& mat)
+	{
+		XMFLOAT4X4 ret;
+		XMStoreFloat4x4(&ret, XMMatrixInverse(nullptr, XMLoadFloat4x4(&mat)));
+		return ret;
+	}
+
 	inline XMFLOAT4X4 Multiply(const XMFLOAT4X4& mat1, const XMFLOAT4X4& mat2)
 	{
 		XMFLOAT4X4 ret;
