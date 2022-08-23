@@ -22,10 +22,21 @@ LRESULT CALLBACK Framework::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 
 LRESULT Framework::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if(mRenderer)
+    if (mRenderer)
         return mRenderer->OnProcessMessage(hwnd, msg, wParam, lParam);
 
-    return NULL;
+    switch (msg)
+    {
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+        if (wParam == VK_ESCAPE)
+        {
+            PostQuitMessage(0);
+            return 0;
+        }
+        break;
+    }
+    return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void Framework::Run()
@@ -94,6 +105,8 @@ void Framework::MsgLoop()
 {
     MSG msg{};
 
+    mTimer.Reset();
+
     while (msg.message != WM_QUIT)
     {
         if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -103,6 +116,9 @@ void Framework::MsgLoop()
         }
         else
         {
+            mTimer.Tick();
+
+            mRenderer->SetDeltaTime(mTimer.ElapsedTime());
             mRenderer->Update();
             mRenderer->Draw();
         }

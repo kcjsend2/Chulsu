@@ -65,7 +65,7 @@ public:
 	const XMFLOAT4X4& GetOldView() const;
 	const XMFLOAT4X4& GetInverseView() const;
 	const XMFLOAT4X4& GetProj() const { return mProj; }
-	XMFLOAT4X4 GetInverseProj() const;
+	const XMFLOAT4X4 GetInverseProj() const;
 
 	const BoundingFrustum& GetWorldFrustum() const { return mFrustumWorld; }
 	const BoundingFrustum& GetViewFrustum() const { return mFrustumView; }

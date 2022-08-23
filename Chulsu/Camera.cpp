@@ -119,7 +119,7 @@ const XMFLOAT4X4& Camera::GetInverseView() const
 	return mInvView;
 }
 
-XMFLOAT4X4 Camera::GetInverseProj() const
+const XMFLOAT4X4 Camera::GetInverseProj() const
 {
 	auto Proj = XMLoadFloat4x4(&GetProj());
 

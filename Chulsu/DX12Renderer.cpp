@@ -161,6 +161,10 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
 void DX12Renderer::BuildObjects()
 {
+    mCamera.SetLens(0.25f * PI, mSwapChainSize.x / mSwapChainSize.y, 1.0f, 20000.0f);
+    mCamera.LookAt(XMFLOAT3(0.0f, 10.0f, -10.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
+    mCamera.SetPosition(0.0f, 0.0f, -0.2f);
+
     mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3(1, 1, 1));
     //mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
@@ -185,10 +189,10 @@ LRESULT DX12Renderer::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 {
     switch (msg)
     {
-    case WM_ACTIVATE:  // 윈도우 창을 활성화 했을 때
+    case WM_ACTIVATE:
         break;
 
-    case WM_SIZE:  // 윈도우 창의 크기를 변경했을 때
+    case WM_SIZE:
         mSwapChainSize.x = LOWORD(lParam);
         mSwapChainSize.y = HIWORD(lParam);
         if (wParam == SIZE_MAXIMIZED)
@@ -203,14 +207,14 @@ LRESULT DX12Renderer::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         }
         break;
 
-    case WM_ENTERSIZEMOVE:  // 윈도우 창의 크기 조절 바를 클릭했을 때
+    case WM_ENTERSIZEMOVE:
         break;
 
-    case WM_EXITSIZEMOVE:  // 윈도우 창 크기 조절을 끝마쳤을 때
+    case WM_EXITSIZEMOVE:
         OnResize();
         break;
 
-    case WM_GETMINMAXINFO:  // 윈도우의 최대 최소 크기를 지정한다.
+    case WM_GETMINMAXINFO:
         reinterpret_cast<MINMAXINFO*>(lParam)->ptMinTrackSize = { 200, 200 };
         break;
 
@@ -240,18 +244,11 @@ LRESULT DX12Renderer::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARA
         OnProcessKeyInput(msg, wParam, lParam);
         break;
 
-    case WM_MENUCHAR:  // 대응하지 않는 단축키를 눌렀을 때
-        // 삑 소리를 방지한다.
-        return MAKELRESULT(0, MNC_CLOSE);
-
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
-
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
     }
-    return 0;
+    return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 void DX12Renderer::OnResize()
@@ -268,14 +265,65 @@ void DX12Renderer::OnProcessMouseUp(WPARAM buttonState, int x, int y)
 
 void DX12Renderer::OnProcessMouseMove(WPARAM buttonState, int x, int y)
 {
+    if ((buttonState & MK_LBUTTON) && GetCapture())
+    {
+        float dx = static_cast<float>(x - mLastMousePos.x);
+        float dy = static_cast<float>(y - mLastMousePos.y);
+
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
+
+        mCamera.Pitch(0.25f * dy);
+        mCamera.RotateY(0.25f * dx);
+    }
 }
 
 void DX12Renderer::OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    switch (uMsg)
+    {
+    case WM_KEYUP:
+        switch (wParam)
+        {
+        case VK_ESCAPE:
+            PostQuitMessage(0);
+            return;
+            break;
+        }
+        break;
+    }
+}
+
+void DX12Renderer::OnPreciseKeyInput()
+{
+    float dist = 50.0f;
+
+    if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
+        dist = 100.0f;
+
+    if (GetAsyncKeyState('A') & 0x8000)
+        mCamera.Strafe(-dist * mDeltaTime);
+
+    if (GetAsyncKeyState('D') & 0x8000)
+        mCamera.Strafe(dist * mDeltaTime);
+
+    if (GetAsyncKeyState('W') & 0x8000)
+        mCamera.Walk(dist * mDeltaTime);
+
+    if (GetAsyncKeyState('S') & 0x8000)
+        mCamera.Walk(-dist * mDeltaTime);
+
+    if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+        mCamera.Upward(dist * mDeltaTime);
+
+    if (GetAsyncKeyState(VK_LCONTROL) & 0x8000)
+        mCamera.Upward(-dist * mDeltaTime);
 }
 
 void DX12Renderer::Update()
 {
+    mCamera.Update(mDeltaTime);
+    OnPreciseKeyInput();
 }
 
 void DX12Renderer::Draw()
@@ -319,11 +367,22 @@ void DX12Renderer::Draw()
     mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetGlobalRootSignature().Get());
 
     mCmdList->SetComputeRoot32BitConstant(0, mOutputTextureIndex, 0);
+
+    auto mat = mCamera.GetInverseView();
+    mCmdList->SetComputeRoot32BitConstants(0, 16, &mat, 4);
+
+    mat = mCamera.GetInverseProj();
+    mCmdList->SetComputeRoot32BitConstants(0, 16, &mat, 20);
+
+    mCmdList->SetComputeRoot32BitConstants(0, 3, &mCamera.GetPosition(), 36);
+
     mCmdList->SetComputeRootShaderResourceView(1, mAssetMgr.GetTLAS().mResult->GetResource()->GetGPUVirtualAddress());
 
     // Dispatch
     mCmdList->SetPipelineState1(mPipelines["RayTracing"].GetStateObject().Get());
-    mCmdList->DispatchRays(&raytraceDesc);
+
+    if(raytraceDesc.Width > 0 && raytraceDesc.Height > 0)
+        mCmdList->DispatchRays(&raytraceDesc);
 
     mResourceTracker.TransitionBarrier(mCmdList, mOutputTexture->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE);
     mResourceTracker.TransitionBarrier(mCmdList, mFrameObjects[rtvIndex].pSwapChainBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST);

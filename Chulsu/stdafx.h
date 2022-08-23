@@ -73,7 +73,7 @@ static dxc::DxcDllSupport gDxcDllSupport;
 #define align_to(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
 
 #define MAX_TEXTURE_SUBRESOURCE_COUNT 3
-
+#define PI 3.1415926535f
 
 class ResourceStateTracker
 {

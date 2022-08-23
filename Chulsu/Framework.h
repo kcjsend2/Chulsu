@@ -1,4 +1,5 @@
 #pragma once
+#include "Timer.h"
 #include "DX12Renderer.h"
 
 class Framework
@@ -19,4 +20,6 @@ private:
     LRESULT OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     void MsgLoop();
+
+    Timer mTimer;
 };

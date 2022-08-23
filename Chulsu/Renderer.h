@@ -15,6 +15,8 @@ public:
 	virtual void Update() = 0;
 	virtual void Draw() = 0;
 
+	virtual void SetDeltaTime(float elapsedTime) { mDeltaTime = elapsedTime; }
+
 protected:
 	virtual void OnResize() = 0;
 
@@ -22,8 +24,11 @@ protected:
 	virtual void OnProcessMouseUp(WPARAM buttonState, int x, int y) = 0;
 	virtual void OnProcessMouseMove(WPARAM buttonState, int x, int y) = 0;
 	virtual void OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam) = 0;
+	virtual void OnPreciseKeyInput() = 0;
 
 protected:
 	HWND mWinHandle = NULL;
 	XMFLOAT2 mSwapChainSize = {0, 0};
+	float mDeltaTime;
+	POINT mLastMousePos{};
 };

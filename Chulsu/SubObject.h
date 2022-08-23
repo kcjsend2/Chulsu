@@ -18,7 +18,7 @@ namespace SubObject
         desc.rootParams[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
         desc.rootParams[0].Constants.RegisterSpace = 0;
         desc.rootParams[0].Constants.ShaderRegister = 0;
-        desc.rootParams[0].Constants.Num32BitValues = 1;
+        desc.rootParams[0].Constants.Num32BitValues = 40;
 
         desc.rootParams[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
         desc.rootParams[1].Descriptor.RegisterSpace = 0;

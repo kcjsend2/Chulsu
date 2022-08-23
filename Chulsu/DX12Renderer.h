@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Renderer.h"
 #include "AssetManager.h"
+#include "Camera.h"
 
 class Pipeline;
 
@@ -26,6 +27,7 @@ protected:
 	virtual void OnProcessMouseUp(WPARAM buttonState, int x, int y) override;
 	virtual void OnProcessMouseMove(WPARAM buttonState, int x, int y) override;
 	virtual void OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+	virtual void OnPreciseKeyInput() override;
 
 private:
 	void WaitUntilGPUComplete();
@@ -75,4 +77,6 @@ private:
 	ComPtr<D3D12MA::Allocation> mOutputTexture;
 
 	UINT mOutputTextureIndex = UINT_MAX;
+
+	Camera mCamera;
 };
