@@ -79,4 +79,6 @@ private:
 	UINT mOutputTextureIndex = UINT_MAX;
 
 	Camera mCamera;
+
+	XMFLOAT3 mShadowDirection = {0, 1, 0};
 };

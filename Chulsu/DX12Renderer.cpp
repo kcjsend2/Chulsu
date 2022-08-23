@@ -162,8 +162,7 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 void DX12Renderer::BuildObjects()
 {
     mCamera.SetLens(0.25f * PI, mSwapChainSize.x / mSwapChainSize.y, 1.0f, 20000.0f);
-    mCamera.LookAt(XMFLOAT3(0.0f, 10.0f, -10.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
-    mCamera.SetPosition(0.0f, 0.0f, -0.2f);
+    mCamera.LookAt(XMFLOAT3(0.0f, 100.0f, 0.0f), XMFLOAT3(0.0f, 100.0f, 150.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
 
     mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3(1, 1, 1));
     //mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
@@ -257,10 +256,17 @@ void DX12Renderer::OnResize()
 
 void DX12Renderer::OnProcessMouseDown(WPARAM buttonState, int x, int y)
 {
+    if ((buttonState) && !GetCapture())
+    {
+        SetCapture(mWinHandle);
+        mLastMousePos.x = x;
+        mLastMousePos.y = y;
+    }
 }
 
 void DX12Renderer::OnProcessMouseUp(WPARAM buttonState, int x, int y)
 {
+    ReleaseCapture();
 }
 
 void DX12Renderer::OnProcessMouseMove(WPARAM buttonState, int x, int y)
@@ -296,10 +302,10 @@ void DX12Renderer::OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void DX12Renderer::OnPreciseKeyInput()
 {
-    float dist = 50.0f;
+    float dist = 100.0f;
 
     if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
-        dist = 100.0f;
+        dist = 300.0f;
 
     if (GetAsyncKeyState('A') & 0x8000)
         mCamera.Strafe(-dist * mDeltaTime);
@@ -318,6 +324,13 @@ void DX12Renderer::OnPreciseKeyInput()
 
     if (GetAsyncKeyState(VK_LCONTROL) & 0x8000)
         mCamera.Upward(-dist * mDeltaTime);
+
+
+    if (GetAsyncKeyState('Q') & 0x8000)
+        mShadowDirection = Vector3::Transform(mShadowDirection, XMMatrixRotationX(0.001));
+
+    if (GetAsyncKeyState('E') & 0x8000)
+        mShadowDirection = Vector3::Transform(mShadowDirection, XMMatrixRotationX(-0.001));
 }
 
 void DX12Renderer::Update()
@@ -372,6 +385,7 @@ void DX12Renderer::Draw()
     mCmdList->SetComputeRoot32BitConstants(0, 16, &mat, 4);
 
     mCmdList->SetComputeRoot32BitConstants(0, 3, &mCamera.GetPosition(), 20);
+    mCmdList->SetComputeRoot32BitConstants(0, 3, &mShadowDirection, 24);
 
     mCmdList->SetComputeRootShaderResourceView(1, mAssetMgr.GetTLAS().mResult->GetResource()->GetGPUVirtualAddress());
 

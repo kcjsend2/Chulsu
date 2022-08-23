@@ -8,6 +8,7 @@ cbuffer FrameCB : register(b0)
     uint2 ScreenResolution : packoffset(c0.y);
     matrix gInvViewProj : packoffset(c1);
     float3 gCameraPos : packoffset(c5);
+    float3 gShadowDirection : packoffset(c6);
 }
 
 cbuffer InstanceCB : register(b1)
@@ -125,7 +126,7 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     RayDesc ray;
     ray.Origin = posW;
-    ray.Direction = normalize(float3(0.5, 0.5, -0.5));
+    ray.Direction = gShadowDirection;
     ray.TMin = 0.01;
     ray.TMax = 100000;
     
