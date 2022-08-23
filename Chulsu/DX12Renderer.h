@@ -12,8 +12,20 @@ public:
 	~DX12Renderer();
 
 	virtual void Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight) override;
+
+	virtual void Update() override;
 	virtual void Draw() override;
 	virtual void BuildObjects() override;
+
+	virtual LRESULT OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+
+protected:
+	virtual void OnResize() override;
+
+	virtual void OnProcessMouseDown(WPARAM buttonState, int x, int y) override;
+	virtual void OnProcessMouseUp(WPARAM buttonState, int x, int y) override;
+	virtual void OnProcessMouseMove(WPARAM buttonState, int x, int y) override;
+	virtual void OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 private:
 	void WaitUntilGPUComplete();

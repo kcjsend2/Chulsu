@@ -2,18 +2,13 @@
 
 RaytracingAccelerationStructure gRtScene : register(t0);
 
-struct VertexAttribute
-{
-    float3 position;
-    float3 normal;
-    float2 texCoord;
-    float3 tangent;
-    float3 biTangent;
-};
-
-cbuffer CommonCB : register(b0)
+cbuffer FrameCB : register(b0)
 {
     uint OutputTextureIndex : packoffset(c0.x);
+    uint2 ScreenResolution : packoffset(c0.y);
+    matrix gInvView : packoffset(c1);
+    matrix gInvProj : packoffset(c5);
+    float3 gCameraPos : packoffset(c9);
 }
 
 cbuffer InstanceCB : register(b1)
@@ -27,6 +22,25 @@ cbuffer InstanceCB : register(b1)
     uint IndexBufferIndex : packoffset(c1.y);
 }
 
+struct VertexAttribute
+{
+    float3 position;
+    float3 normal;
+    float2 texCoord;
+    float3 tangent;
+    float3 biTangent;
+};
+
+float3 GetWorldPosition(float2 texcoord, float depth)
+{
+    float4 clipSpaceLocation;
+    clipSpaceLocation.xy = texcoord * 2.0f - 1.0f;
+    clipSpaceLocation.y *= -1;
+    clipSpaceLocation.z = depth;
+    clipSpaceLocation.w = 1.0f;
+    float4 homogenousLocation = mul(clipSpaceLocation, gInvProj);
+    return homogenousLocation.xyz / homogenousLocation.w;
+}
 
 float3 linearToSrgb(float3 c)
 {
@@ -55,7 +69,7 @@ void RayGen()
     float aspectRatio = dims.x / dims.y;
     
     RayDesc ray;
-    ray.Origin = float3(0, 0, -2);
+    ray.Origin = gCameraPos;
     ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
 
     ray.TMin = 0;

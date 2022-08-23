@@ -181,6 +181,103 @@ void DX12Renderer::BuildObjects()
     mPipelines["RayTracing"] = pipeline;
 }
 
+LRESULT DX12Renderer::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg)
+    {
+    case WM_ACTIVATE:  // 윈도우 창을 활성화 했을 때
+        break;
+
+    case WM_SIZE:  // 윈도우 창의 크기를 변경했을 때
+        mSwapChainSize.x = LOWORD(lParam);
+        mSwapChainSize.y = HIWORD(lParam);
+        if (wParam == SIZE_MAXIMIZED)
+        {
+            OnResize();
+        }
+        else if (wParam == SIZE_RESTORED)
+        {
+            if (mDevice) {
+                OnResize();
+            }
+        }
+        break;
+
+    case WM_ENTERSIZEMOVE:  // 윈도우 창의 크기 조절 바를 클릭했을 때
+        break;
+
+    case WM_EXITSIZEMOVE:  // 윈도우 창 크기 조절을 끝마쳤을 때
+        OnResize();
+        break;
+
+    case WM_GETMINMAXINFO:  // 윈도우의 최대 최소 크기를 지정한다.
+        reinterpret_cast<MINMAXINFO*>(lParam)->ptMinTrackSize = { 200, 200 };
+        break;
+
+    case WM_LBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+        OnProcessMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        break;
+
+    case WM_LBUTTONUP:
+    case WM_MBUTTONUP:
+    case WM_RBUTTONUP:
+        OnProcessMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        break;
+
+    case WM_MOUSEMOVE:
+        OnProcessMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+        break;
+
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+        if (wParam == VK_ESCAPE)
+        {
+            PostQuitMessage(0);
+            return 0;
+        }
+        OnProcessKeyInput(msg, wParam, lParam);
+        break;
+
+    case WM_MENUCHAR:  // 대응하지 않는 단축키를 눌렀을 때
+        // 삑 소리를 방지한다.
+        return MAKELRESULT(0, MNC_CLOSE);
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+    return 0;
+}
+
+void DX12Renderer::OnResize()
+{
+}
+
+void DX12Renderer::OnProcessMouseDown(WPARAM buttonState, int x, int y)
+{
+}
+
+void DX12Renderer::OnProcessMouseUp(WPARAM buttonState, int x, int y)
+{
+}
+
+void DX12Renderer::OnProcessMouseMove(WPARAM buttonState, int x, int y)
+{
+}
+
+void DX12Renderer::OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+}
+
+void DX12Renderer::Update()
+{
+}
+
 void DX12Renderer::Draw()
 {
     const float clearColor[4] = { 0.4f, 0.6f, 0.2f, 1.0f };

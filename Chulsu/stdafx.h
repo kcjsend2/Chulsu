@@ -69,9 +69,6 @@ using Microsoft::WRL::ComPtr;
 
 static dxc::DxcDllSupport gDxcDllSupport;
 
-extern int gFrameWidth;
-extern int gFrameHeight;
-
 #define arraysize(a) (sizeof(a)/sizeof(a[0]))
 #define align_to(_alignment, _val) (((_val + _alignment - 1) / _alignment) * _alignment)
 

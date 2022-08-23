@@ -2,20 +2,30 @@
 
 LRESULT CALLBACK Framework::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch (msg)
+    Framework* pThis = nullptr;
+    if (msg == WM_CREATE)
     {
-    case WM_CLOSE:
-        DestroyWindow(hwnd);
-        return 0;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    case WM_KEYDOWN:
-        if (wParam == VK_ESCAPE) PostQuitMessage(0);
-        return 0;
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        CREATESTRUCT* pcs = reinterpret_cast<CREATESTRUCT*>(lParam);
+        pThis = reinterpret_cast<Framework*>(pcs->lpCreateParams);
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pThis);
     }
+    else
+    {
+        pThis = reinterpret_cast<Framework*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    }
+
+    if (pThis)
+        return pThis->OnProcessMessage(hwnd, msg, wParam, lParam);
+    else
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+LRESULT Framework::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if(mRenderer)
+        return mRenderer->OnProcessMessage(hwnd, msg, wParam, lParam);
+
+    return NULL;
 }
 
 void Framework::Run()
@@ -40,29 +50,40 @@ void Framework::Run()
 void Framework::Init(const string& winTitle, uint32_t width, uint32_t height)
 {
     const WCHAR* className = L"Main Window";
-    DWORD winStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
 
     // Register the window class
-    WNDCLASS wc = {};
+    WNDCLASSEX wc = {};
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WndProc;
-    wc.hInstance = GetModuleHandle(nullptr);
+    wc.cbClsExtra = 0;
+    wc.cbWndExtra = 0;
+    wc.hInstance = GetModuleHandle(NULL);
+    wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.lpszMenuName = NULL;
     wc.lpszClassName = className;
+    wc.hIconSm = LoadIcon(wc.hInstance, IDI_APPLICATION);
 
-    if (RegisterClass(&wc) == 0)
+    if (RegisterClassEx(&wc) == 0)
     {
         return;
     }
 
     // Window size we have is for client area, calculate actual window size
     RECT r{ 0, 0, (LONG)width, (LONG)height };
-    AdjustWindowRect(&r, winStyle, false);
 
     int windowWidth = r.right - r.left;
     int windowHeight = r.bottom - r.top;
 
     // create the window
     wstring wTitle = stringTowstring(winTitle);
-    mWinHandle = CreateWindowEx(0, className, wTitle.c_str(), winStyle, CW_USEDEFAULT, CW_USEDEFAULT, windowWidth, windowHeight, nullptr, nullptr, wc.hInstance, nullptr);
+    mWinHandle = CreateWindow(className, wTitle.c_str(),
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        windowWidth, windowHeight, NULL, NULL,
+        GetModuleHandle(NULL), this);
+
     if (mWinHandle == nullptr)
     {
         return;
@@ -82,6 +103,7 @@ void Framework::MsgLoop()
         }
         else
         {
+            mRenderer->Update();
             mRenderer->Draw();
         }
     }
