@@ -1,5 +1,6 @@
 #define UINT_MAX 0xffffffff
 
+SamplerState gAnisotropicWrap : register(s0);
 RaytracingAccelerationStructure gRtScene : register(t0);
 
 cbuffer FrameCB : register(b0)
@@ -17,10 +18,6 @@ cbuffer InstanceCB : register(b1)
     uint VertexAttribIndex : packoffset(c0.y);
     uint IndexBufferIndex : packoffset(c0.z);
 }
-
-// StructuredBuffer<GeometryInfo> geoInfo = ResourceDescriptorHeap[InstanceCB.GeoInfoIndex];
-// geoInfo[GeometryIndex()]
-// 각 인스턴스마다 StructuredBuffer로 GeometryInfo를 올리고, 그걸 GeometryIndex로 얻어와서 StructuredBuffer의 검색 인덱스로 사용한다.
 
 struct GeometryInfo
 {
@@ -40,16 +37,60 @@ struct Vertex
     float3 biTangent;
 };
 
-//float3 GetWorldPosition(float2 texcoord, float depth)
-//{
-//    float4 clipSpaceLocation;
-//    clipSpaceLocation.xy = texcoord * 2.0f - 1.0f;
-//    clipSpaceLocation.y *= -1;
-//    clipSpaceLocation.z = depth;
-//    clipSpaceLocation.w = 1.0f;
-//    float4 homogenousLocation = mul(clipSpaceLocation, gInvProj);
-//    return homogenousLocation.xyz / homogenousLocation.w;
-//}
+float BarycentricLerp(in float v0, in float v1, in float v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float2 BarycentricLerp(in float2 v0, in float2 v1, in float2 v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float3 BarycentricLerp(in float3 v0, in float3 v1, in float3 v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+float4 BarycentricLerp(in float4 v0, in float4 v1, in float4 v2, in float3 barycentrics)
+{
+    return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
+}
+
+Vertex BarycentricLerp(in Vertex v0, in Vertex v1, in Vertex v2, in float3 barycentrics)
+{
+    Vertex vtx;
+    vtx.position = BarycentricLerp(v0.position, v1.position, v2.position, barycentrics);
+    vtx.normal = normalize(BarycentricLerp(v0.normal, v1.normal, v2.normal, barycentrics));
+    vtx.texCoord = BarycentricLerp(v0.texCoord, v1.texCoord, v2.texCoord, barycentrics);
+    vtx.tangent = normalize(BarycentricLerp(v0.tangent, v1.tangent, v2.tangent, barycentrics));
+    vtx.biTangent = normalize(BarycentricLerp(v0.biTangent, v1.biTangent, v2.biTangent, barycentrics));
+    
+    return vtx;
+}
+
+Vertex GetHitSurface(in BuiltInTriangleIntersectionAttributes attr, in uint geometryIdx)
+{
+    float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+
+    StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + geometryIdx];
+    StructuredBuffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + geometryIdx];
+    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
+    
+    GeometryInfo geoInfo = geoInfoBuffer[geometryIdx];
+    
+    uint primIndex = PrimitiveIndex();
+    
+    uint i0 = IndexBuffer[primIndex * 3 + 0];
+    uint i1 = IndexBuffer[primIndex * 3 + 1];
+    uint i2 = IndexBuffer[primIndex * 3 + 2];
+    
+    Vertex v0 = VertexBuffer[i0];
+    Vertex v1 = VertexBuffer[i1];
+    Vertex v2 = VertexBuffer[i2];
+
+    return BarycentricLerp(v0, v1, v2, barycentrics);
+}
 
 float3 linearToSrgb(float3 c)
 {
@@ -125,21 +166,7 @@ void Miss(inout RayPayload payload)
 [shader("closesthit")]
 void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + GeometryIndex()];
-    StructuredBuffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + GeometryIndex()];
-    
-    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
-    GeometryInfo geoInfo = geoInfoBuffer[GeometryIndex()];
-    
-    uint primIndex = PrimitiveIndex();
-    
-    uint i0 = IndexBuffer[primIndex * 3 + 0];
-    uint i1 = IndexBuffer[primIndex * 3 + 1];
-    uint i2 = IndexBuffer[primIndex * 3 + 2];
-    
-    Vertex v0 = VertexBuffer[i0];
-    Vertex v1 = VertexBuffer[i1];
-    Vertex v2 = VertexBuffer[i2];
+    Vertex v = GetHitSurface(attribs, GeometryIndex());
     
     float hitT = RayTCurrent();
     float3 rayDirW = WorldRayDirection();
