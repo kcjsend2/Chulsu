@@ -56,7 +56,7 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE GetIndexedCPUHandle(const UINT& index);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetIndexedGPUHandle(const UINT& index);
 
-	shared_ptr<Texture> LoadTexture(ID3D12Device5* device,
+	void LoadTexture(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* alloc,
 		ResourceStateTracker& tracker,

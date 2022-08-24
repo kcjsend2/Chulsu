@@ -164,26 +164,29 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 
 					wstring wPath = stringTowstring(string(fullPath.C_Str()));
 
-					mTextures[wPath] = LoadTexture(device, cmdList, alloc, tracker, wPath,
-						D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_UAV_DIMENSION_UNKNOWN, true, false, FLAG_WIC);
-
-					switch (aiTextureType(i))
+					if (mTextures[wPath] == nullptr)
 					{
-					case aiTextureType_DIFFUSE:
-						mTextureIndices[pAiMesh->mMaterialIndex].AlbedoTextureIndex = mHeapCurrentIndex - 1;
-						break;
+						LoadTexture(device, cmdList, alloc, tracker, wPath,
+							D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_UAV_DIMENSION_UNKNOWN, true, false, FLAG_WIC);
 
-					case aiTextureType_AMBIENT:
-						mTextureIndices[pAiMesh->mMaterialIndex].MetalicTextureIndex = mHeapCurrentIndex - 1;
-						break;
+						switch (aiTextureType(i))
+						{
+						case aiTextureType_DIFFUSE:
+							mTextureIndices[pAiMesh->mMaterialIndex].AlbedoTextureIndex = mHeapCurrentIndex - 1;
+							break;
 
-					case aiTextureType_HEIGHT:
-						mTextureIndices[pAiMesh->mMaterialIndex].NormalMapTextureIndex = mHeapCurrentIndex - 1;
-						break;
+						case aiTextureType_AMBIENT:
+							mTextureIndices[pAiMesh->mMaterialIndex].MetalicTextureIndex = mHeapCurrentIndex - 1;
+							break;
 
-					case aiTextureType_SHININESS:
-						mTextureIndices[pAiMesh->mMaterialIndex].RoughnessTextureIndex = mHeapCurrentIndex - 1;
-						break;
+						case aiTextureType_HEIGHT:
+							mTextureIndices[pAiMesh->mMaterialIndex].NormalMapTextureIndex = mHeapCurrentIndex - 1;
+							break;
+
+						case aiTextureType_SHININESS:
+							mTextureIndices[pAiMesh->mMaterialIndex].RoughnessTextureIndex = mHeapCurrentIndex - 1;
+							break;
+						}
 					}
 				}
 			}
@@ -323,7 +326,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedGPUHandle(const UINT& index)
 	return gpuStart;
 }
 
-shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
+void AssetManager::LoadTexture(ID3D12Device5* device,
 	ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* alloc,
 	ResourceStateTracker& tracker,
@@ -368,9 +371,6 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	newTexture->SetUAVDimension(uavDimension);
 
 	mTextures[filePath] = newTexture;
-
-
-	return newTexture;
 }
 
 void AssetManager::SetTexture(ID3D12Device5* device,
