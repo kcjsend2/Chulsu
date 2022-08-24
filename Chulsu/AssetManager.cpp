@@ -430,7 +430,6 @@ UINT AssetManager::SetShaderResource(ID3D12Device5* device, ID3D12GraphicsComman
 
 	device->CreateShaderResourceView(alloc->GetResource(), &desc, bufferCPUHandle);
 
-
 	return mHeapCurrentIndex;
 }
 

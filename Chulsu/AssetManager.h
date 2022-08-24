@@ -99,6 +99,8 @@ public:
 
 	UINT GetCurrentHeapIndex() { return mHeapCurrentIndex; }
 
+	void AddCurrentHeapIndex() { mHeapCurrentIndex++; }
+
 	const TextureHeapIndex& GetMaterialIndices(UINT key) { return mTextureIndices[key]; }
 
 	UINT mCbvSrvUavDescriptorSize = 0;
