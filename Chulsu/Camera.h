@@ -19,7 +19,6 @@ public:
 	void SetLook(const XMFLOAT3& look);
 	void SetUp(const XMFLOAT3& up);
 
-	void SetPlayer(class Player* player) { mPlayer = player; }
 	void SetTimeLag(float lag) { mTimeLag = lag; }
 
 	void SetLens(float aspect);
@@ -96,8 +95,6 @@ protected:
 
 	BoundingFrustum mFrustumView;
 	BoundingFrustum mFrustumWorld;
-
-	class Player* mPlayer = nullptr;
 
 	float mFovYNeutral = 0.0f;
 	float mFarZNeutral = 0.0f;
