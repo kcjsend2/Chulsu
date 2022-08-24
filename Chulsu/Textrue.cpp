@@ -17,7 +17,7 @@ void Texture::LoadTextureFromDDS(
 	bool isCubeMap = false;
 	mName = wstringTostring(filePath);
 
-	D3D12MA::Allocation* textureAlloc;
+	ComPtr<D3D12MA::Allocation> textureAlloc;
 	LoadDDSTextureFromFileEx(
 		device, filePath.c_str(), 0,
 		D3D12_RESOURCE_FLAG_NONE, DDS_LOADER_DEFAULT,
@@ -67,7 +67,7 @@ void Texture::LoadTextureFromWIC(
 
 	mName = wstringTostring(filePath);
 
-	D3D12MA::Allocation* textureAlloc = NULL;
+	ComPtr<D3D12MA::Allocation> textureAlloc = NULL;
 	ThrowIfFailed(LoadWICTextureFromFileEx(
 		device, filePath.c_str(), 0,
 		D3D12_RESOURCE_FLAG_NONE, WIC_LOADER_DEFAULT,
