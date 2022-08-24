@@ -5,27 +5,30 @@
 #include "AssetManager.h"
 
 template<typename Cnst>
-class ConstantBuffer
+class UploadBuffer
 {
 public:
-	ConstantBuffer(ID3D12Device5* device,
+	UploadBuffer(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
 		UINT count,
 		ComPtr<D3D12MA::Allocator> alloc,
 		ResourceStateTracker& tracker,
-		AssetManager& assetMgr)
+		AssetManager& assetMgr, bool isConstant)
 	{
 		// 바이트 크기는 항상 256의 배수가 되어야 한다.
-		mByteSize = (sizeof(Cnst) + 255) & ~255;
+		if (isConstant)
+			mByteSize = (sizeof(Cnst) + 255) & ~255;
+		else
+			mByteSize = sizeof(Cnst);
 
 		mUploadAlloc = assetMgr.CreateResource(device, cmdList, alloc, tracker, NULL, mByteSize * count, 1, D3D12_RESOURCE_STATE_GENERIC_READ,
 			D3D12_RESOURCE_DIMENSION_BUFFER, DXGI_FORMAT_UNKNOWN, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE_UPLOAD);
 
 		ThrowIfFailed(mUploadAlloc->GetResource()->Map(0, nullptr, (void**)(&mData)));
 	}
-	ConstantBuffer(const ConstantBuffer& rhs) = delete;
-	ConstantBuffer& operator=(const ConstantBuffer& rhs) = delete;
-	virtual ~ConstantBuffer()
+	UploadBuffer(const UploadBuffer& rhs) = delete;
+	UploadBuffer& operator=(const UploadBuffer& rhs) = delete;
+	virtual ~UploadBuffer()
 	{
 		if (mUploadAlloc)
 			mUploadAlloc->GetResource()->Unmap(0, nullptr);

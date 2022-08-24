@@ -19,7 +19,7 @@ public:
 	UINT GetVertexAttribIndex() { return mVertexAttribIndex; }
 	UINT GetIndexBufferIndex() { return mIndexBufferIndex; }
 
-	const UINT& GetSubMeshCount() { return mSubMeshes.size(); }
+	const UINT GetSubMeshCount() { return mSubMeshes.size(); }
 
 private:
 	vector<SubMesh> mSubMeshes;

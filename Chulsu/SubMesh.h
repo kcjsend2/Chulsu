@@ -28,6 +28,9 @@ public:
 	UINT GetVertexCount() { return mVerticesCount; }
 	UINT GetIndexCount() { return mIndexCount; }
 
+	void SetMaterialIndex(UINT materialIndex) { mMaterialIndex = materialIndex; }
+	UINT GetMaterialIndex() { return mMaterialIndex; }
+
 	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc() { return mVertexBufferAlloc; }
 	ComPtr<D3D12MA::Allocation> GetIndexBufferAlloc() { return mIndexBufferAlloc; }
 
@@ -56,4 +59,6 @@ private:
 	UINT mIndexCount = 0;
 
 	string mName = {};
+
+	UINT mMaterialIndex = UINT_MAX;
 };

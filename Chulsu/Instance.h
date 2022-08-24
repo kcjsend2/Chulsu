@@ -6,13 +6,19 @@
 
 struct InstanceConstant
 {
+	UINT GeometryInfoIndex;
+
+	UINT VertexAttribIndex;
+	UINT IndexBufferIndex;
+};
+
+struct GeometryInfo
+{
 	UINT AlbedoTextureIndex;
 	UINT MetalicTextureIndex;
 	UINT RoughnessTextureIndex;
 	UINT NormalMapTextureIndex;
-
-	UINT VertexAttribIndex;
-	UINT IndexBufferIndex;
+	UINT OpacityMapTextureIndex;
 };
 
 class Instance
@@ -38,7 +44,15 @@ public:
 		ResourceStateTracker& tracker,
 		AssetManager& assetMgr);
 
-	std::shared_ptr<ConstantBuffer<InstanceConstant>> GetInstanceCB() { return mInstanceCB; }
+	void BuildStructuredBuffer(
+		ID3D12Device5* device,
+		ID3D12GraphicsCommandList4* cmdList,
+		ComPtr<D3D12MA::Allocator> alloc,
+		ResourceStateTracker& tracker,
+		AssetManager& assetMgr);
+
+	std::shared_ptr<UploadBuffer<InstanceConstant>> GetInstanceCB() { return mInstanceCB; }
+	std::shared_ptr<UploadBuffer<GeometryInfo>> GetGeometrySB() { return mGeometrySB; }
 
 	const XMFLOAT4X4& GetWorldMatrix() { return mWorld; }
 	const UINT& GetHitGroupIndex() { return mHitGroupIndex; }
@@ -46,7 +60,8 @@ public:
 private:
 	ComPtr<D3D12MA::Allocation> mConstantBufferAlloc;
 
-	std::shared_ptr<ConstantBuffer<InstanceConstant>> mInstanceCB;
+	std::shared_ptr<UploadBuffer<InstanceConstant>> mInstanceCB;
+	std::shared_ptr<UploadBuffer<GeometryInfo>> mGeometrySB;
 
 	XMFLOAT4X4 mWorld = {};
 
@@ -58,6 +73,7 @@ private:
 	UINT mMetalicTextureIndex = UINT_MAX;
 	UINT mRoughnessTextureIndex = UINT_MAX;
 	UINT mNormalMapTextureIndex = UINT_MAX;
+	UINT mOpacityMapTextureIndex = UINT_MAX;
 
 	UINT mHitGroupIndex = UINT_MAX;
 

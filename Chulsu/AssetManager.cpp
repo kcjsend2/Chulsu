@@ -150,15 +150,19 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 			Indices.push_back(Face.mIndices[2]);
 		}
 
-		aiMaterial* pAiMaterial = pAiScene->mMaterials[pAiMesh->mMaterialIndex];
-		if(!mTextureIndices[pAiMesh->mMaterialIndex].init)
+		auto matIndex = pAiMesh->mMaterialIndex;
+		aiMaterial* pAiMaterial = pAiScene->mMaterials[matIndex];
+
+		if(!mTextureIndices[matIndex].init)
 		{
-			mTextureIndices[pAiMesh->mMaterialIndex].init = true;
+			mTextureIndices[matIndex].init = true;
+			int textureNum = 0;
 			for (int i = 1; i < aiTextureType_UNKNOWN + 1; ++i)
 			{
 				aiString path;
 				if (pAiMaterial->GetTexture((aiTextureType)i, 0, &path) == AI_SUCCESS)
 				{
+					textureNum++;
 					aiString fullPath = dirPath;
 					fullPath.Append(path.data);
 
@@ -172,20 +176,25 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 						switch (aiTextureType(i))
 						{
 						case aiTextureType_DIFFUSE:
-							mTextureIndices[pAiMesh->mMaterialIndex].AlbedoTextureIndex = mHeapCurrentIndex - 1;
+							mTextureIndices[matIndex].AlbedoTextureIndex = mHeapCurrentIndex - 1;
 							break;
 
 						case aiTextureType_AMBIENT:
-							mTextureIndices[pAiMesh->mMaterialIndex].MetalicTextureIndex = mHeapCurrentIndex - 1;
+							mTextureIndices[matIndex].MetalicTextureIndex = mHeapCurrentIndex - 1;
 							break;
 
 						case aiTextureType_HEIGHT:
-							mTextureIndices[pAiMesh->mMaterialIndex].NormalMapTextureIndex = mHeapCurrentIndex - 1;
+							mTextureIndices[matIndex].NormalMapTextureIndex = mHeapCurrentIndex - 1;
 							break;
 
 						case aiTextureType_SHININESS:
-							mTextureIndices[pAiMesh->mMaterialIndex].RoughnessTextureIndex = mHeapCurrentIndex - 1;
+							mTextureIndices[matIndex].RoughnessTextureIndex = mHeapCurrentIndex - 1;
 							break;
+
+						case aiTextureType_OPACITY:
+							mTextureIndices[matIndex].OpacityMapTextureIndex = mHeapCurrentIndex - 1;
+							break;
+
 						}
 					}
 				}
@@ -193,6 +202,7 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 		}
 
 		SubMesh subMesh;
+		subMesh.SetMaterialIndex(matIndex);
 		subMesh.SetName(pAiMesh->mName.C_Str());
 		subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
@@ -242,6 +252,7 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 	shared_ptr<Instance> instance = make_shared<Instance>(position, rotation, scale);
 	instance->SetMesh(mMeshMap[path]);
 	instance->BuildConstantBuffer(device, cmdList, alloc, tracker, *this);
+	instance->BuildStructuredBuffer(device, cmdList, alloc, tracker, *this);
 	instance->Update();
 
 	mInstances.push_back(instance);

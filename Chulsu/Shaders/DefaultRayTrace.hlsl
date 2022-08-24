@@ -13,14 +13,23 @@ cbuffer FrameCB : register(b0)
 
 cbuffer InstanceCB : register(b1)
 {
-    uint AlbedoTextureIndex : packoffset(c0.x);
-    uint MetalicTextureIndex : packoffset(c0.y);
-    uint RoughnessTextureIndex : packoffset(c0.z);
-    uint NormalMapTextureIndex : packoffset(c0.w);
-
-    uint VertexAttribIndex : packoffset(c1.x);
-    uint IndexBufferIndex : packoffset(c1.y);
+    uint GeometryInfoIndex : packoffset(c0.x);
+    uint VertexAttribIndex : packoffset(c0.y);
+    uint IndexBufferIndex : packoffset(c0.z);
 }
+
+// StructuredBuffer<GeometryInfo> geoInfo = ResourceDescriptorHeap[InstanceCB.GeoInfoIndex];
+// geoInfo[GeometryIndex()]
+// 각 인스턴스마다 StructuredBuffer로 GeometryInfo를 올리고, 그걸 GeometryIndex로 얻어와서 StructuredBuffer의 검색 인덱스로 사용한다.
+
+struct GeometryInfo
+{
+    uint AlbedoTextureIndex;
+    uint MetalicTextureIndex;
+    uint RoughnessTextureIndex;
+    uint NormalMapTextureIndex;
+    uint OpacityMapTextureIndex;
+};
 
 struct Vertex
 {
@@ -118,6 +127,9 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
 {
     StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + GeometryIndex()];
     StructuredBuffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + GeometryIndex()];
+    
+    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
+    GeometryInfo geoInfo = geoInfoBuffer[GeometryIndex()];
     
     uint primIndex = PrimitiveIndex();
     

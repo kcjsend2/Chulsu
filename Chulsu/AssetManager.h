@@ -15,6 +15,7 @@ struct TextureHeapIndex
 	UINT MetalicTextureIndex = UINT_MAX;
 	UINT RoughnessTextureIndex = UINT_MAX;
 	UINT NormalMapTextureIndex = UINT_MAX;
+	UINT OpacityMapTextureIndex = UINT_MAX;
 };
 
 struct AccelerationStructureBuffers
@@ -97,6 +98,8 @@ public:
 	ComPtr<ID3D12DescriptorHeap> GetDescriptorHeap() { return mDescriptorHeap; }
 
 	UINT GetCurrentHeapIndex() { return mHeapCurrentIndex; }
+
+	const TextureHeapIndex& GetMaterialIndices(UINT key) { return mTextureIndices[key]; }
 
 	UINT mCbvSrvUavDescriptorSize = 0;
 
