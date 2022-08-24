@@ -57,7 +57,7 @@ float4 BarycentricLerp(in float4 v0, in float4 v1, in float4 v2, in float3 baryc
     return v0 * barycentrics.x + v1 * barycentrics.y + v2 * barycentrics.z;
 }
 
-Vertex BarycentricLerp(in Vertex v0, in Vertex v1, in Vertex v2, in float3 barycentrics)
+Vertex VertexBarycentricLerp(in Vertex v0, in Vertex v1, in Vertex v2, in float3 barycentrics)
 {
     Vertex vtx;
     vtx.position = BarycentricLerp(v0.position, v1.position, v2.position, barycentrics);
@@ -75,9 +75,6 @@ Vertex GetHitSurface(in BuiltInTriangleIntersectionAttributes attr, in uint geom
 
     StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + geometryIdx];
     StructuredBuffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + geometryIdx];
-    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
-    
-    GeometryInfo geoInfo = geoInfoBuffer[geometryIdx];
     
     uint primIndex = PrimitiveIndex();
     
@@ -89,7 +86,7 @@ Vertex GetHitSurface(in BuiltInTriangleIntersectionAttributes attr, in uint geom
     Vertex v1 = VertexBuffer[i1];
     Vertex v2 = VertexBuffer[i2];
 
-    return BarycentricLerp(v0, v1, v2, barycentrics);
+    return VertexBarycentricLerp(v0, v1, v2, barycentrics);
 }
 
 float3 linearToSrgb(float3 c)
@@ -168,6 +165,9 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
 {
     Vertex v = GetHitSurface(attribs, GeometryIndex());
     
+    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
+    GeometryInfo geoInfo = geoInfoBuffer[GeometryIndex()];
+    
     float hitT = RayTCurrent();
     float3 rayDirW = WorldRayDirection();
     float3 rayOriginW = WorldRayOrigin();
@@ -189,11 +189,19 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
-    const float3 A = float3(1, 0, 0);
-    const float3 B = float3(0, 1, 0);
-    const float3 C = float3(0, 0, 1);
+    if (geoInfo.AlbedoTextureIndex != UINT_MAX)
+    {
+        Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
+        payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+    }
+    else
+    {
+        const float3 A = float3(1, 0, 0);
+        const float3 B = float3(0, 1, 0);
+        const float3 C = float3(0, 0, 1);
 
-    payload.color = (A * barycentrics.x + B * barycentrics.y + C * barycentrics.z) * factor;
+        payload.color = (A * barycentrics.x + B * barycentrics.y + C * barycentrics.z) * factor;
+    }
 }
 
 [shader("closesthit")]

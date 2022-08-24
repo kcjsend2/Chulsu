@@ -31,5 +31,17 @@ void Instance::BuildStructuredBuffer(ID3D12Device5* device, ID3D12GraphicsComman
 			materialIndeices.RoughnessTextureIndex, materialIndeices.NormalMapTextureIndex,
 			materialIndeices.OpacityMapTextureIndex });
 	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+
+	srvDesc.Buffer.FirstElement = 0;
+	srvDesc.Buffer.NumElements = subMeshes.size() * 5;
+	srvDesc.Buffer.StructureByteStride = 0;
+	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+	assetMgr.SetShaderResource(device, cmdList, mGeometrySB->GetUploadAllocation(), srvDesc);
 }
 

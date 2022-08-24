@@ -50,6 +50,8 @@ public:
 		return mByteSize;
 	}
 
+	ComPtr<D3D12MA::Allocation> GetUploadAllocation() { return mUploadAlloc; }
+
 private:
 	ComPtr<D3D12MA::Allocation> mUploadAlloc = nullptr;
 	BYTE* mData = nullptr;
