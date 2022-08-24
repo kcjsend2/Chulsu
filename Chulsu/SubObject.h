@@ -7,7 +7,33 @@ namespace SubObject
         D3D12_ROOT_SIGNATURE_DESC desc = {};
         std::vector<D3D12_DESCRIPTOR_RANGE> range;
         std::vector<D3D12_ROOT_PARAMETER> rootParams;
+        std::vector<D3D12_STATIC_SAMPLER_DESC> samplerDesc;
     };
+
+    D3D12_STATIC_SAMPLER_DESC SamplerDesc(
+        UINT shaderRegister,
+        D3D12_FILTER filter,
+        D3D12_TEXTURE_ADDRESS_MODE addressMode,
+        D3D12_COMPARISON_FUNC comparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS,
+        D3D12_STATIC_BORDER_COLOR borderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE,
+        D3D12_SHADER_VISIBILITY shaderVisibility = D3D12_SHADER_VISIBILITY_ALL)
+    {
+        D3D12_STATIC_SAMPLER_DESC samplerDesc{};
+        samplerDesc.Filter = filter;
+        samplerDesc.AddressU = addressMode;
+        samplerDesc.AddressV = addressMode;
+        samplerDesc.AddressW = addressMode;
+        samplerDesc.MipLODBias = 0;
+        samplerDesc.MaxAnisotropy = 16;
+        samplerDesc.ComparisonFunc = comparisonFunc;
+        samplerDesc.BorderColor = borderColor;
+        samplerDesc.MinLOD = 0;
+        samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+        samplerDesc.ShaderRegister = shaderRegister;
+        samplerDesc.RegisterSpace = 0;
+        samplerDesc.ShaderVisibility = shaderVisibility;
+        return samplerDesc;
+    }
 
     RootSignatureDesc CreateGlobalRootDesc()
     {
@@ -24,10 +50,15 @@ namespace SubObject
         desc.rootParams[1].Descriptor.RegisterSpace = 0;
         desc.rootParams[1].Descriptor.ShaderRegister = 0;
 
+        desc.samplerDesc.resize(1);
+        desc.samplerDesc[0] = SamplerDesc(0, D3D12_FILTER_ANISOTROPIC, D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+
         // Create the desc
         desc.desc.NumParameters = desc.rootParams.size();
         desc.desc.pParameters = desc.rootParams.data();
         desc.desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+        desc.desc.NumStaticSamplers = desc.samplerDesc.size();
+        desc.desc.pStaticSamplers = desc.samplerDesc.data();
 
         return desc;
     }
