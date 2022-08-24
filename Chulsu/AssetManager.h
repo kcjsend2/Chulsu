@@ -7,11 +7,27 @@ class SubMesh;
 class Mesh;
 struct Vertex;
 
+struct TextureHeapIndex
+{
+	bool init = false;
+
+	UINT AlbedoTextureIndex = UINT_MAX;
+	UINT MetalicTextureIndex = UINT_MAX;
+	UINT RoughnessTextureIndex = UINT_MAX;
+	UINT NormalMapTextureIndex = UINT_MAX;
+};
+
 struct AccelerationStructureBuffers
 {
 	ComPtr<D3D12MA::Allocation> mScratch = NULL;
 	ComPtr<D3D12MA::Allocation> mResult = NULL;
 	ComPtr<D3D12MA::Allocation> mInstanceDesc = NULL;    // Used only for top-level AS
+};
+
+enum FLAG_TEXTURE_LOAD
+{
+	FLAG_WIC,
+	FLAG_DDS
 };
 
 class AssetManager
@@ -28,7 +44,7 @@ public:
 		D3D12_RESOURCE_STATES initialState, D3D12_RESOURCE_DIMENSION dimension,
 		DXGI_FORMAT format, D3D12_TEXTURE_LAYOUT layout, D3D12_RESOURCE_FLAGS flag,D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT);
 
-	void LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* alloc, ResourceStateTracker& tracker, const std::string& path);
+	void LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, D3D12MA::Allocator* alloc, ResourceStateTracker& tracker, const std::string& path);
 
 	void CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* alloc, ResourceStateTracker& tracker, const std::string& path,
@@ -47,7 +63,7 @@ public:
 		const std::wstring& filePath,
 		const D3D12_RESOURCE_STATES& resourceStates,
 		const D3D12_SRV_DIMENSION& srvDimension, const D3D12_UAV_DIMENSION& uavDimension,
-		bool isSRV, bool isUAV);
+		bool isSRV, bool isUAV, FLAG_TEXTURE_LOAD flag);
 
 	void SetTexture(ID3D12Device5* device,
 		ID3D12GraphicsCommandList4* cmdList,
@@ -97,4 +113,6 @@ private:
 	//EVERY SRV/UAV/CBV will store here for Bindless Resources Technique.
 	ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
 	UINT mHeapCurrentIndex = 0;
+
+	unordered_map<UINT, TextureHeapIndex> mTextureIndices;
 };

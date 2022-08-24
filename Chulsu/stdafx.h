@@ -59,6 +59,7 @@
 #include "DirectXTex.h"
 #include "D3D12MemAlloc.h"
 #include "DDSTextureLoader12.h"
+#include "WICTextureLoader12.h"
 #include "pix3.h"
 
 using namespace std;

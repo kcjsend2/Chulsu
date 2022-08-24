@@ -22,7 +22,7 @@ cbuffer InstanceCB : register(b1)
     uint IndexBufferIndex : packoffset(c1.y);
 }
 
-struct VertexAttribute
+struct Vertex
 {
     float3 position;
     float3 normal;
@@ -87,7 +87,6 @@ void RayGen()
     float2 d = ((crd / dims) * 2.f - 1.f);
     float aspectRatio = dims.x / dims.y;
     
-    
     RayDesc ray = GenerateCameraRay(launchIndex.xy, gCameraPos, gInvViewProj);
 
     ray.TMin = 0;
@@ -117,6 +116,19 @@ void Miss(inout RayPayload payload)
 [shader("closesthit")]
 void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + GeometryIndex()];
+    StructuredBuffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + GeometryIndex()];
+    
+    uint primIndex = PrimitiveIndex();
+    
+    uint i0 = IndexBuffer[primIndex * 3 + 0];
+    uint i1 = IndexBuffer[primIndex * 3 + 1];
+    uint i2 = IndexBuffer[primIndex * 3 + 2];
+    
+    Vertex v0 = VertexBuffer[i0];
+    Vertex v1 = VertexBuffer[i1];
+    Vertex v2 = VertexBuffer[i2];
+    
     float hitT = RayTCurrent();
     float3 rayDirW = WorldRayDirection();
     float3 rayOriginW = WorldRayOrigin();

@@ -1,5 +1,7 @@
 #pragma once
 
+class AssetManager;
+
 class Texture
 {
 public:
@@ -13,8 +15,17 @@ public:
 		ID3D12GraphicsCommandList4* cmdList,
 		D3D12MA::Allocator* allocator,
 		ResourceStateTracker& tracker,
+		AssetManager& assetMgr,
 		const std::wstring& filePath,
-		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_GENERIC_READ);
+
+	void LoadTextureFromWIC(ID3D12Device5* device,
+		ID3D12GraphicsCommandList4* cmdList,
+		D3D12MA::Allocator* alloc,
+		ResourceStateTracker& tracker,
+		AssetManager& assetMgr,
+		const std::wstring& filePath,
+		D3D12_RESOURCE_STATES resourceStates = D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	void SetSRVDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex);
 	void SetUAVDescriptorHeapInfo(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, UINT DescriptorHeapIndex);

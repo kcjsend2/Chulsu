@@ -1056,7 +1056,7 @@ namespace
         DXGI_FORMAT format,
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
-        ComPtr<D3D12MA::Allocation>& textureAlloc,
+        D3D12MA::Allocation** textureAlloc,
         D3D12MA::Allocator* allocator)
     {
         if (!d3dDevice)
@@ -1088,7 +1088,7 @@ namespace
             &desc,
             D3D12_RESOURCE_STATE_COPY_DEST,
             NULL,
-            &textureAlloc,
+            textureAlloc,
             IID_NULL, NULL);
 
         return hr;
@@ -1355,7 +1355,7 @@ namespace
         size_t maxsize,
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
-        ComPtr<D3D12MA::Allocation> textureAlloc,
+        D3D12MA::Allocation** textureAlloc,
         D3D12MA::Allocator* allocator,
         std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
         _Out_opt_ bool* outIsCubeMap)
@@ -1872,7 +1872,7 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
     size_t maxsize,
     D3D12_RESOURCE_FLAGS resFlags,
     unsigned int loadFlags,
-    D3D12MA::Allocation* textureAlloc,
+    D3D12MA::Allocation** textureAlloc,
     D3D12MA::Allocator* alloc,
     std::unique_ptr<uint8_t[]>& ddsData,
     std::vector<D3D12_SUBRESOURCE_DATA>& subresources,

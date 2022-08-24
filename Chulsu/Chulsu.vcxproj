@@ -168,6 +168,7 @@
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="Textrue.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="WICTextureLoader12.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetManager.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="SubObject.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="WICTextureLoader12.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

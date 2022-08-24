@@ -28,6 +28,8 @@
 #include "D3D12MemAlloc.h"
 #include "d3dx12.h"
 
+using Microsoft::WRL::ComPtr;
+
 namespace DirectX
 {
     enum DDS_ALPHA_MODE
@@ -98,10 +100,10 @@ namespace DirectX
         size_t maxsize,
         D3D12_RESOURCE_FLAGS resFlags,
         unsigned int loadFlags,
-        D3D12MA::Allocation* textureAlloc,
+        D3D12MA::Allocation** textureAlloc,
         D3D12MA::Allocator* allocator,
         std::unique_ptr<uint8_t[]>& ddsData,
         std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
-        _Out_opt_ DDS_ALPHA_MODE* alphaMode,
-        _Out_opt_ bool* isCubeMap);
+        _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr,
+        _Out_opt_ bool* isCubeMap = nullptr);
 }

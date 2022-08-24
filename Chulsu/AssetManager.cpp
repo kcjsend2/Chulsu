@@ -84,9 +84,12 @@ ComPtr<D3D12MA::Allocation> AssetManager::CreateResource(
 	return defaultAllocation;
 }
 
-void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
+void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
 	D3D12MA::Allocator* alloc, ResourceStateTracker& tracker, const std::string& path)
 {
+	//Hard coded, fix it later.
+	aiString dirPath = aiString("Contents/Sponza/");
+
 	Assimp::Importer Importer;
 	constexpr uint32_t ImporterFlags =
 		aiProcess_ConvertToLeftHanded |
@@ -147,7 +150,47 @@ void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 			Indices.push_back(Face.mIndices[2]);
 		}
 
+		aiMaterial* pAiMaterial = pAiScene->mMaterials[pAiMesh->mMaterialIndex];
+		if(!mTextureIndices[pAiMesh->mMaterialIndex].init)
+		{
+			mTextureIndices[pAiMesh->mMaterialIndex].init = true;
+			for (int i = 1; i < aiTextureType_UNKNOWN + 1; ++i)
+			{
+				aiString path;
+				if (pAiMaterial->GetTexture((aiTextureType)i, 0, &path) == AI_SUCCESS)
+				{
+					aiString fullPath = dirPath;
+					fullPath.Append(path.data);
+
+					wstring wPath = stringTowstring(string(fullPath.C_Str()));
+
+					mTextures[wPath] = LoadTexture(device, cmdList, alloc, tracker, wPath,
+						D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_UAV_DIMENSION_UNKNOWN, true, false, FLAG_WIC);
+
+					switch (aiTextureType(i))
+					{
+					case aiTextureType_DIFFUSE:
+						mTextureIndices[pAiMesh->mMaterialIndex].AlbedoTextureIndex = mHeapCurrentIndex - 1;
+						break;
+
+					case aiTextureType_AMBIENT:
+						mTextureIndices[pAiMesh->mMaterialIndex].MetalicTextureIndex = mHeapCurrentIndex - 1;
+						break;
+
+					case aiTextureType_HEIGHT:
+						mTextureIndices[pAiMesh->mMaterialIndex].NormalMapTextureIndex = mHeapCurrentIndex - 1;
+						break;
+
+					case aiTextureType_SHININESS:
+						mTextureIndices[pAiMesh->mMaterialIndex].RoughnessTextureIndex = mHeapCurrentIndex - 1;
+						break;
+					}
+				}
+			}
+		}
+
 		SubMesh subMesh;
+		subMesh.SetName(pAiMesh->mName.C_Str());
 		subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), sizeof(UINT),
 			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
 		subMeshes.push_back(subMesh);
@@ -158,18 +201,26 @@ void AssetManager::LoadMesh(ID3D12Device5* device, ID3D12GraphicsCommandList4* c
 	for (int i = 0; i < subMeshes.size(); ++i)
 	{
 		if (i == 0)
+		{
 			vertexBufferIndex = SetShaderResource(device, cmdList, subMeshes[i].GetVertexBufferAlloc(), subMeshes[i].VertexShaderResourceView());
+		}
 		else
 			SetShaderResource(device, cmdList, subMeshes[i].GetVertexBufferAlloc(), subMeshes[i].VertexShaderResourceView());
+
+		mHeapCurrentIndex++;
 	}
 
 	UINT IndexBufferIndex = UINT_MAX;
 	for (int i = 0; i < subMeshes.size(); ++i)
 	{
 		if (i == 0)
+		{
 			IndexBufferIndex = SetShaderResource(device, cmdList, subMeshes[i].GetIndexBufferAlloc(), subMeshes[i].IndexShaderResourceView());
+		}
 		else
 			SetShaderResource(device, cmdList, subMeshes[i].GetIndexBufferAlloc(), subMeshes[i].IndexShaderResourceView());
+
+		mHeapCurrentIndex++;
 	}
 
 	mesh->SetVertexAttribIndex(vertexBufferIndex);
@@ -183,7 +234,7 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 	XMFLOAT3 position, XMFLOAT3 rotation, XMFLOAT3 scale)
 {
 	if(mMeshMap[path] == NULL)
-		LoadMesh(device, cmdList, alloc, tracker, path);
+		LoadAssimpScene(device, cmdList, alloc, tracker, path);
 
 	shared_ptr<Instance> instance = make_shared<Instance>(position, rotation, scale);
 	instance->SetMesh(mMeshMap[path]);
@@ -279,16 +330,22 @@ shared_ptr<Texture> AssetManager::LoadTexture(ID3D12Device5* device,
 	const std::wstring& filePath,
 	const D3D12_RESOURCE_STATES& resourceStates,
 	const D3D12_SRV_DIMENSION& srvDimension, const D3D12_UAV_DIMENSION& uavDimension,
-	bool isSRV, bool isUAV)
+	bool isSRV, bool isUAV, FLAG_TEXTURE_LOAD flag)
 {
 	shared_ptr<Texture> newTexture = make_shared<Texture>();
-	newTexture->LoadTextureFromDDS(device, cmdList, alloc, tracker, filePath, resourceStates);
+
+	if(flag == FLAG_WIC)
+		newTexture->LoadTextureFromWIC(device, cmdList, alloc, tracker,*this, filePath, resourceStates);
+
+	else if(flag == FLAG_DDS)
+		newTexture->LoadTextureFromDDS(device, cmdList, alloc, tracker, *this, filePath, resourceStates);
 
 	auto textureCPUHandle = GetIndexedCPUHandle(mHeapCurrentIndex);
 	auto textureGPUHandle = GetIndexedGPUHandle(mHeapCurrentIndex);
 
 	if (isSRV)
 	{
+		newTexture->SetSRVDimension(D3D12_SRV_DIMENSION_TEXTURE2D);
 		auto srv = newTexture->ShaderResourceView();
 		device->CreateShaderResourceView(newTexture->GetResource(), &srv, textureCPUHandle);
 		newTexture->SetSRVDescriptorHeapInfo(textureCPUHandle, textureGPUHandle, mHeapCurrentIndex);
@@ -362,7 +419,6 @@ UINT AssetManager::SetShaderResource(ID3D12Device5* device, ID3D12GraphicsComman
 
 	device->CreateShaderResourceView(alloc->GetResource(), &desc, bufferCPUHandle);
 
-	mHeapCurrentIndex++;
 
 	return mHeapCurrentIndex;
 }

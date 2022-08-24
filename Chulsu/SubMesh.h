@@ -12,7 +12,7 @@ public:
 	XMFLOAT3 biTangent = { 0, 0, 0 };
 };
 
-class SubMesh	
+class SubMesh
 {
 public:
 	SubMesh() {}
@@ -28,11 +28,14 @@ public:
 	UINT GetVertexCount() { return mVerticesCount; }
 	UINT GetIndexCount() { return mIndexCount; }
 
-	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc () { return mVertexBufferAlloc; }
+	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc() { return mVertexBufferAlloc; }
 	ComPtr<D3D12MA::Allocation> GetIndexBufferAlloc() { return mIndexBufferAlloc; }
 
 	const D3D12_SHADER_RESOURCE_VIEW_DESC VertexShaderResourceView();
 	const D3D12_SHADER_RESOURCE_VIEW_DESC IndexShaderResourceView();
+
+	string GetName() { return mName; }
+	void SetName(string name) { mName = name; }
 
 private:
 	AccelerationStructureBuffers mBLAS;
@@ -51,4 +54,6 @@ private:
 	UINT mVerticesCount = 0;
 	UINT mVertexStride = 0;
 	UINT mIndexCount = 0;
+
+	string mName = {};
 };
