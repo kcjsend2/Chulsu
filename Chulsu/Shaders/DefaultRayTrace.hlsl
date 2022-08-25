@@ -74,7 +74,7 @@ Vertex GetHitSurface(in BuiltInTriangleIntersectionAttributes attr, in uint geom
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
 
     StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + geometryIdx];
-    StructuredBuffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + geometryIdx];
+    Buffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + geometryIdx];
     
     uint primIndex = PrimitiveIndex();
     
@@ -157,10 +157,11 @@ void Miss(inout RayPayload payload)
 [shader("closesthit")]
 void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    Vertex v = GetHitSurface(attribs, GeometryIndex());
+    uint geometryIndex = GeometryIndex();
+    Vertex v = GetHitSurface(attribs, geometryIndex);
     
     StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
-    GeometryInfo geoInfo = geoInfoBuffer[GeometryIndex()];
+    GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
     
     float hitT = RayTCurrent();
     float3 rayDirW = WorldRayDirection();
@@ -184,22 +185,9 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
-        if (GeometryIndex() == 0)
-        {
-            float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-        
-            const float3 A = float3(1, 0, 0);
-            const float3 B = float3(0, 1, 0);
-            const float3 C = float3(0, 0, 1);
-
-            payload.color = (A * barycentrics.x + B * barycentrics.y + C * barycentrics.z) * factor;
-        }
-        else
-        {
-            Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
-            payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
-            //payload.color = float3(v.texCoord.xy, 0);
-        }
+        Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
+        payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+        //payload.color = float3(v.texCoord.xy, 0);
     }
     else
     {
