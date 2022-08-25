@@ -302,10 +302,10 @@ void DX12Renderer::OnProcessKeyInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void DX12Renderer::OnPreciseKeyInput()
 {
-    float dist = 100.0f;
+    float dist = 500.0f;
 
     if (GetAsyncKeyState(VK_LSHIFT) & 0x8000)
-        dist = 300.0f;
+        dist = 1000.0f;
 
     if (GetAsyncKeyState('A') & 0x8000)
         mCamera.Strafe(-dist * mDeltaTime);

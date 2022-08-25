@@ -127,12 +127,6 @@ void RayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
-
-    float2 crd = float2(launchIndex.xy);
-    float2 dims = float2(launchDim.xy);
-
-    float2 d = ((crd / dims) * 2.f - 1.f);
-    float aspectRatio = dims.x / dims.y;
     
     RayDesc ray = GenerateCameraRay(launchIndex.xy, gCameraPos, gInvViewProj);
 
@@ -187,15 +181,30 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     float factor = shadowPayload.hit ? 0.1 : 1.0;
     
-    float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
     
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
-        Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
-        payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+        if (GeometryIndex() == 0)
+        {
+            float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
+        
+            const float3 A = float3(1, 0, 0);
+            const float3 B = float3(0, 1, 0);
+            const float3 C = float3(0, 0, 1);
+
+            payload.color = (A * barycentrics.x + B * barycentrics.y + C * barycentrics.z) * factor;
+        }
+        else
+        {
+            Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
+            payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+            //payload.color = float3(v.texCoord.xy, 0);
+        }
     }
     else
     {
+        float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
+        
         const float3 A = float3(1, 0, 0);
         const float3 B = float3(0, 1, 0);
         const float3 C = float3(0, 0, 1);
