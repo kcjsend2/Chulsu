@@ -182,22 +182,11 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     float factor = shadowPayload.hit ? 0.1 : 1.0;
     
-    
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
         Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
-        payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
-        //payload.color = float3(v.texCoord.xy, 0);
-    }
-    else
-    {
-        float3 barycentrics = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
-        
-        const float3 A = float3(1, 0, 0);
-        const float3 B = float3(0, 1, 0);
-        const float3 C = float3(0, 0, 1);
-
-        payload.color = (A * barycentrics.x + B * barycentrics.y + C * barycentrics.z) * factor;
+        //payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+        payload.color = float3(v.texCoord.x, v.texCoord.y, 0);
     }
 }
 

@@ -50,7 +50,7 @@ const D3D12_SHADER_RESOURCE_VIEW_DESC SubMesh::VertexShaderResourceView()
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 
 	srvDesc.Buffer.FirstElement = 0;
-	srvDesc.Buffer.NumElements = mVerticesCount;
+	srvDesc.Buffer.NumElements = mVerticesCount * 14;
 	srvDesc.Buffer.StructureByteStride = 0;
 	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
