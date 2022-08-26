@@ -472,7 +472,11 @@ void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* 
 				geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 				geomDesc.Triangles.IndexCount = (*j).GetIndexCount();
 			}
-			geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+			if (GetMaterialIndices(j->GetMaterialIndex()).OpacityMapTextureIndex == UINT_MAX)
+				geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+			else
+				geomDesc.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE;
 
 			geomDescs.push_back(geomDesc);
 		}

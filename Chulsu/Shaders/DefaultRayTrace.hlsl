@@ -134,6 +134,8 @@ void RayGen()
     ray.TMax = 100000;
 
     RayPayload payload;
+    payload.color = float3(0, 0, 0);
+    
     RWTexture2D<float4> output = ResourceDescriptorHeap[OutputTextureIndex];
     
     TraceRay(gRtScene, 0, 0xFFFFFFFF, 0, 0, 0, ray, payload);
@@ -177,16 +179,40 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     ray.TMax = 100000;
     
     ShadowPayload shadowPayload;
-    
     TraceRay(gRtScene, 0, 0xFFFFFFFF, 1, 0, 1, ray, shadowPayload);
     
     float factor = shadowPayload.hit ? 0.1 : 1.0;
     
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
-        Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
+        Texture2D<float3> albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
         payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
         //payload.color = float3(v.texCoord.x, v.texCoord.y, 0);
+    }
+    //if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
+    //{
+    //    Texture2D opacityMap = ResourceDescriptorHeap[geoInfo.OpacityMapTextureIndex];
+    //    payload.color = float3(opacityMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x, 0, 0) * factor;
+    //}
+    
+}
+
+[shader("anyhit")]
+void AnyHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    const uint geometryIndex = GeometryIndex();
+    const Vertex v = GetHitSurface(attribs, geometryIndex);
+    
+    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
+    const GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
+    
+    if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
+    {
+        Texture2D opacityMap = ResourceDescriptorHeap[geoInfo.OpacityMapTextureIndex];
+        if (opacityMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x < 0.35f)
+        {
+            IgnoreHit();
+        }
     }
 }
 
@@ -194,6 +220,25 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
 void ShadowClosestHit(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     payload.hit = true;
+}
+
+[shader("anyhit")]
+void ShadowAnyHit(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    const uint geometryIndex = GeometryIndex();
+    const Vertex v = GetHitSurface(attribs, geometryIndex);
+    
+    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
+    const GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
+    
+    if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
+    {
+        Texture2D opacityMap = ResourceDescriptorHeap[geoInfo.OpacityMapTextureIndex];
+        if (opacityMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x < 0.35f)
+        {
+            IgnoreHit();
+        }
+    }
 }
 
 [shader("miss")]

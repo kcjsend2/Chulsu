@@ -118,10 +118,12 @@ namespace SubObject
 
     static const WCHAR* kMissShader = L"Miss";
     static const WCHAR* kClosestHitShader = L"ClosestHit";
+    static const WCHAR* kAnyHitShader = L"AnyHit";
     static const WCHAR* kHitGroup = L"HitGroup";
 
     static const WCHAR* kShadowMissShader = L"ShadowMiss";
     static const WCHAR* kShadowClosestHitShader = L"ShadowClosestHit";
+    static const WCHAR* kShadowAnyHitShader = L"ShadowAnyHit";
     static const WCHAR* kShadowHitGroup = L"ShadowHitGroup";
 
     ComPtr<IDxcBlob> CompileLibrary(const WCHAR* filename, const WCHAR* targetString)
