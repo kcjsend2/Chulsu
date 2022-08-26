@@ -405,17 +405,16 @@ void DX12Renderer::Draw()
     mCmdList->Close();
     ID3D12CommandList* cmdList[] = { mCmdList.Get() };
     mCmdQueue->ExecuteCommandLists(_countof(cmdList), cmdList);
-    mFenceValue++;
-    mCmdQueue->Signal(mFence.Get(), mFenceValue);
+
+    WaitUntilGPUComplete();
 
     mSwapChain->Present(0, 0);
 
     // Prepare the command list for the next frame
     uint32_t bufferIndex = mSwapChain->GetCurrentBackBufferIndex();
 
-    WaitUntilGPUComplete();
 
-    //ThrowIfFailed(mDevice->GetDeviceRemovedReason());
+    ThrowIfFailed(mDevice->GetDeviceRemovedReason());
 
     mFrameObjects[bufferIndex].pCommandAllocator->Reset();
     mCmdList->Reset(mFrameObjects[bufferIndex].pCommandAllocator.Get(), nullptr);

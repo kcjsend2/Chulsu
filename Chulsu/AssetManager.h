@@ -123,4 +123,8 @@ private:
 
 	ComPtr<IDStorageQueue> mTextureQueue;
 	ComPtr<IDStorageFactory> mTextureFactory;
+
+	ComPtr<ID3D12Fence> mTextureLoadingFence;
+	UINT64 mFenceValue = 0;
+	HANDLE mFenceEvent = NULL;
 };

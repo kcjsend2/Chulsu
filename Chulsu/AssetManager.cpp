@@ -12,6 +12,9 @@ void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 {
 	ThrowIfFailed(DStorageGetFactory(IID_PPV_ARGS(&mTextureFactory)));
 
+	ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mTextureLoadingFence)));
+	mFenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
 	DSTORAGE_QUEUE_DESC queueDesc{};
 	queueDesc.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY;
 	queueDesc.Priority = DSTORAGE_PRIORITY_NORMAL;
@@ -19,7 +22,6 @@ void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 	queueDesc.Device = device;
 
 	ThrowIfFailed(mTextureFactory->CreateQueue(&queueDesc, IID_PPV_ARGS(&mTextureQueue)));
-
 
 	auto descHeapDescriptor = DescriptorHeapDesc(
 		numDescriptor,
@@ -358,45 +360,53 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 {
 	shared_ptr<Texture> newTexture = make_shared<Texture>();
 
-	//ComPtr<IDStorageFile> textureFile;
-	//mTextureFactory->OpenFile(filePath.c_str(), IID_PPV_ARGS(&textureFile));
+	/*ComPtr<IDStorageFile> textureFile;
+	mTextureFactory->OpenFile(filePath.c_str(), IID_PPV_ARGS(&textureFile));
 
-	//BY_HANDLE_FILE_INFORMATION fileInfo{};
-	//ThrowIfFailed(textureFile->GetFileInformation(&fileInfo));
-	//uint32_t fileSize = fileInfo.nFileSizeLow;
+	BY_HANDLE_FILE_INFORMATION fileInfo{};
+	ThrowIfFailed(textureFile->GetFileInformation(&fileInfo));
+	uint32_t fileSize = fileInfo.nFileSizeLow;
 
-	//ComPtr<D3D12MA::Allocation> textureAlloc;
-	//D3D12MA::ALLOCATION_DESC allocationDesc = {};
-	//allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+	ComPtr<D3D12MA::Allocation> textureAlloc;
+	D3D12MA::ALLOCATION_DESC allocationDesc = {};
+	allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
-	//auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
-	//	D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, fileSize, 1, 1,
-	//	1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
+		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, fileSize, 1, 1,
+		1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
-	//alloc->CreateResource(
-	//	&allocationDesc,
-	//	&resourceDesc,
-	//	D3D12_RESOURCE_STATE_GENERIC_READ,
-	//	NULL,
-	//	&textureAlloc,
-	//	IID_NULL, NULL);
+	alloc->CreateResource(
+		&allocationDesc,
+		&resourceDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		NULL,
+		&textureAlloc,
+		IID_NULL, NULL);
 
-	//DSTORAGE_REQUEST textureRequest = {};
-	//textureRequest.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-	//textureRequest.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
-	//textureRequest.Source.File.Source = textureFile.Get();
-	//textureRequest.Source.File.Offset = 0;
-	//textureRequest.Source.File.Size = fileSize;
-	//textureRequest.UncompressedSize = fileSize;
-	//textureRequest.Destination.Buffer.Resource = textureAlloc->GetResource();
-	//textureRequest.Destination.Buffer.Offset = 0;
-	//textureRequest.Destination.Buffer.Size = textureRequest.Source.File.Size;
+	tracker.AddTrackingResource(textureAlloc->GetResource(), D3D12_RESOURCE_STATE_COMMON);
 
-	//mTextureQueue->EnqueueRequest(&textureRequest);
+	DSTORAGE_REQUEST textureRequest = {};
+	textureRequest.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
+	textureRequest.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
+	textureRequest.Source.File.Source = textureFile.Get();
+	textureRequest.Source.File.Offset = 0;
+	textureRequest.Source.File.Size = fileSize;
+	textureRequest.UncompressedSize = fileSize;
+	textureRequest.Destination.Buffer.Resource = textureAlloc->GetResource();
+	textureRequest.Destination.Buffer.Offset = 0;
+	textureRequest.Destination.Buffer.Size = textureRequest.Source.File.Size;
 
-	//// Need Fence event.
-	//mTextureQueue->Submit();
+	mTextureQueue->EnqueueRequest(&textureRequest);
 
+	mTextureQueue->Submit();
+
+	UINT64 currFenceValue = ++mFenceValue;
+	mTextureQueue->EnqueueSignal(mTextureLoadingFence.Get(), currFenceValue);
+	if (mTextureLoadingFence->GetCompletedValue() < currFenceValue)
+	{
+		ThrowIfFailed(mTextureLoadingFence->SetEventOnCompletion(currFenceValue, mFenceEvent));
+		WaitForSingleObject(mFenceEvent, INFINITE);
+	}*/
 
 	if(flag == FLAG_WIC)
 		newTexture->LoadTextureFromWIC(device, cmdList, alloc, tracker,*this, filePath, resourceStates);
