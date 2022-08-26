@@ -371,7 +371,7 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 	D3D12MA::ALLOCATION_DESC allocationDesc = {};
 	allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
-	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
 		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, fileSize, 1, 1,
 		1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
 
@@ -409,9 +409,9 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 		WaitForSingleObject(mFenceEvent, INFINITE);
 	}
 
-	newTexture->SetTextureBufferAlloc(textureAlloc);
+	newTexture->SetTextureBufferAlloc(textureAlloc);*/
 
-	tracker.TransitionBarrier(cmdList, textureAlloc->GetResource(), D3D12_RESOURCE_STATE_GENERIC_READ);*/
+	/*tracker.TransitionBarrier(cmdList, textureAlloc->GetResource(), D3D12_RESOURCE_STATE_GENERIC_READ);*/
 
 	if (flag == FLAG_WIC)
 		newTexture->LoadTextureFromWIC(device, cmdList, alloc, tracker,*this, filePath, resourceStates);
