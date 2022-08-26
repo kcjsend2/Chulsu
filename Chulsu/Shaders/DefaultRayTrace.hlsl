@@ -185,8 +185,8 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
         Texture2D albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
-        //payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
-        payload.color = float3(v.texCoord.x, v.texCoord.y, 0);
+        payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+        //payload.color = float3(v.texCoord.x, v.texCoord.y, 0);
     }
 }
 
