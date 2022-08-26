@@ -32,6 +32,8 @@ public:
 
 	void SetSRVDimension(D3D12_SRV_DIMENSION dimension) { mSRVDimension = dimension; }
 	void SetUAVDimension(D3D12_UAV_DIMENSION dimension) { mUAVDimension = dimension; }
+
+	void SetTextureBufferAlloc(ComPtr<D3D12MA::Allocation> textureAlloc) { mTextureBufferAlloc = textureAlloc; }
 	string SetName(string name) { mName = name; }
 	string GetName() { return mName; }
 
