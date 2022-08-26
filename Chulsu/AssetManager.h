@@ -120,4 +120,7 @@ private:
 	UINT mHeapCurrentIndex = 0;
 
 	unordered_map<UINT, TextureHeapIndex> mTextureIndices;
+
+	ComPtr<IDStorageQueue> mTextureQueue;
+	ComPtr<IDStorageFactory> mTextureFactory;
 };

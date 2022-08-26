@@ -187,13 +187,7 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     {
         Texture2D<float3> albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
         payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
-        //payload.color = float3(v.texCoord.x, v.texCoord.y, 0);
     }
-    //if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
-    //{
-    //    Texture2D opacityMap = ResourceDescriptorHeap[geoInfo.OpacityMapTextureIndex];
-    //    payload.color = float3(opacityMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x, 0, 0) * factor;
-    //}
     
 }
 

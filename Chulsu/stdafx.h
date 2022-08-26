@@ -48,6 +48,7 @@
 #include <filesystem>
 #include <span>
 #include <DXProgrammableCapture.h>
+#include <dstorage.h>
 
 #include "dxc/dxcapi.use.h"
 #include <d3dcompiler.h>
