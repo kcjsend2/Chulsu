@@ -27,6 +27,7 @@ void Instance::BuildStructuredBuffer(ID3D12Device5* device, ID3D12GraphicsComman
 	{
 		auto materialIndeices = assetMgr.GetMaterialIndices(subMeshes[i].GetMaterialIndex());
 		mGeometrySB->CopyData(i, GeometryInfo{
+			subMeshes[i].GetVertexOffset(), subMeshes[i].GetIndexOffset(),
 			materialIndeices.AlbedoTextureIndex, materialIndeices.MetalicTextureIndex,
 			materialIndeices.RoughnessTextureIndex, materialIndeices.NormalMapTextureIndex,
 			materialIndeices.OpacityMapTextureIndex });
@@ -38,7 +39,7 @@ void Instance::BuildStructuredBuffer(ID3D12Device5* device, ID3D12GraphicsComman
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 
 	srvDesc.Buffer.FirstElement = 0;
-	srvDesc.Buffer.NumElements = subMeshes.size() * 5;
+	srvDesc.Buffer.NumElements = subMeshes.size() * 7;
 	srvDesc.Buffer.StructureByteStride = 0;
 	srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 

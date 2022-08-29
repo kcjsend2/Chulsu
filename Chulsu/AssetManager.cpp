@@ -122,14 +122,18 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 	}
 
 	vector<SubMesh> subMeshes;
+	std::vector<Vertex> Vertices;
+	std::vector<uint32_t> Indices;
+
+	UINT vertexOffset = 0;
+	UINT IndexOffset = 0;
+
 	subMeshes.reserve(pAiScene->mNumMeshes);
 	for (unsigned m = 0; m < pAiScene->mNumMeshes; ++m)
 	{
 		// Assimp object
 		const aiMesh* pAiMesh = pAiScene->mMeshes[m];
 
-		std::vector<Vertex> Vertices;
-		Vertices.reserve(pAiMesh->mNumVertices);
 		for (unsigned int v = 0; v < pAiMesh->mNumVertices; ++v)
 		{
 			Vertex& vertex = Vertices.emplace_back();
@@ -152,7 +156,6 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 			}
 		}
 
-		std::vector<uint32_t> Indices;
 		Indices.reserve(static_cast<size_t>(pAiMesh->mNumFaces) * 3);
 		std::span Faces = { pAiMesh->mFaces, pAiMesh->mNumFaces };
 		for (const auto& Face : Faces)
@@ -216,37 +219,23 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 		SubMesh subMesh;
 		subMesh.SetMaterialIndex(matIndex);
 		subMesh.SetName(pAiMesh->mName.C_Str());
-		subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), sizeof(UINT),
-			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
+
+		subMesh.SetVertexOffset(vertexOffset);
+		subMesh.SetIndexOffset(IndexOffset);
+
 		subMeshes.push_back(subMesh);
+
+		vertexOffset = Vertices.size();
+		IndexOffset = Indices.size();
 	}
 	shared_ptr<Mesh> mesh = make_shared<Mesh>(subMeshes);
+	mesh->InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), sizeof(UINT),
+		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, Vertices.data(), (UINT)Vertices.size(), Indices.data(), (UINT)Indices.size());
 
-	UINT vertexBufferIndex = UINT_MAX;
-	for (int i = 0; i < subMeshes.size(); ++i)
-	{
-		if (i == 0)
-		{
-			vertexBufferIndex = SetShaderResource(device, cmdList, subMeshes[i].GetVertexBufferAlloc(), subMeshes[i].VertexShaderResourceView());
-		}
-		else
-			SetShaderResource(device, cmdList, subMeshes[i].GetVertexBufferAlloc(), subMeshes[i].VertexShaderResourceView());
-
-		mHeapCurrentIndex++;
-	}
-
-	UINT IndexBufferIndex = UINT_MAX;
-	for (int i = 0; i < subMeshes.size(); ++i)
-	{
-		if (i == 0)
-		{
-			IndexBufferIndex = SetShaderResource(device, cmdList, subMeshes[i].GetIndexBufferAlloc(), subMeshes[i].IndexShaderResourceView());
-		}
-		else
-			SetShaderResource(device, cmdList, subMeshes[i].GetIndexBufferAlloc(), subMeshes[i].IndexShaderResourceView());
-
-		mHeapCurrentIndex++;
-	}
+	UINT vertexBufferIndex = SetShaderResource(device, cmdList, mesh->GetVertexBufferAlloc(), mesh->VertexShaderResourceView());
+	mHeapCurrentIndex++;
+	UINT IndexBufferIndex = SetShaderResource(device, cmdList, mesh->GetIndexBufferAlloc(), mesh->IndexShaderResourceView());
+	mHeapCurrentIndex++;
 
 	mesh->SetVertexAttribIndex(vertexBufferIndex);
 	mesh->SetIndexBufferIndex(IndexBufferIndex);
@@ -268,67 +257,6 @@ void AssetManager::CreateInstance(ID3D12Device5* device, ID3D12GraphicsCommandLi
 	instance->Update();
 
 	mInstances.push_back(instance);
-}
-
-
-void AssetManager::LoadTestInstance(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
-{
-	Vertex v1, v2, v3;
-	v1.position = { 0, 1, 0 };
-	v2.position = { 0.866f, -0.5f, 0 };
-	v3.position = { -0.866f, -0.5f, 0 };
-
-	const Vertex vertices[] = { v1, v2, v3 };
-	const XMFLOAT3 positions[] = { {0, 0, 0}, {-2, 0, 0}, {2, 0, 0} };
-
-	shared_ptr<Instance> instance[4] = { make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>(), make_shared<Instance>() };
-
-	SubMesh subMesh;
-	subMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, vertices, 3, NULL, 0);
-
-	vector<SubMesh> subMeshes;
-	subMeshes.push_back(subMesh);
-
-	auto mesh = make_shared<Mesh>(subMeshes);
-	mMeshMap["Triangle"] = mesh;
-
-	for (int i = 0; i < 3; ++i)
-	{
-		instance[i]->SetMesh(mMeshMap["Triangle"]);
-		instance[i]->BuildConstantBuffer(device, cmdList, alloc, tracker, *this);
-		instance[i]->SetPosition(positions[i]);
-		instance[i]->Update();
-		mInstances.push_back(instance[i]);
-	}
-
-	UINT vertexBufferIndex = SetShaderResource(device, cmdList, subMesh.GetVertexBufferAlloc(), subMesh.VertexShaderResourceView());
-	mMeshMap["Triangle"]->SetVertexAttribIndex(vertexBufferIndex);
-
-	Vertex v4, v5, v6, v7, v8, v9;
-		
-	v4.position = { -100, -1, -2 };
-	v5.position = { 100, -1,  100 };
-	v6.position = { -100, -1,  100 };
-	v7.position = { -100, -1,  -2 };
-	v8.position = { 100, -1,  -2 };
-	v9.position = { 100, -1,  100 };
-
-	const Vertex planeVertices[] = { v4, v5, v6, v7, v8, v9 };
-
-	SubMesh planeSubMesh;
-	planeSubMesh.InitializeBuffers(device, cmdList, alloc, tracker, *this, sizeof(Vertex), NULL, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, planeVertices, 6, NULL, 0);
-
-	vector<SubMesh> planeSubMeshes;
-	planeSubMeshes.push_back(planeSubMesh);
-
-	auto planeMesh = make_shared<Mesh>(planeSubMeshes);
-	mMeshMap["Plane"] = planeMesh;
-
-	instance[3]->SetMesh(mMeshMap["Plane"]);
-	instance[3]->BuildConstantBuffer(device, cmdList, alloc, tracker, *this);
-	instance[3]->SetPosition(positions[0]);
-	instance[3]->Update();
-	mInstances.push_back(instance[3]);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE AssetManager::GetIndexedCPUHandle(const UINT& index)
@@ -527,25 +455,32 @@ void AssetManager::BuildAccelerationStructure(ID3D12Device5* device, ID3D12Graph
 
 void AssetManager::BuildBLAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker)
 {
-
+	UINT vertexBufferOffset = 0;
+	UINT indexBufferOffset = 0;
 	for (auto i = mMeshMap.begin(); i != mMeshMap.end(); ++i)
 	{
 		std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geomDescs;
 
 		auto mesh = i->second;
+		auto vertexBufferAlloc = mesh->GetVertexBufferAlloc();
+		auto indexBufferAlloc = mesh->GetIndexBufferAlloc();
+
 		auto subMeshes = mesh->GetSubMeshes();
 		for (auto j = subMeshes.begin(); j != subMeshes.end(); ++j)
 		{
+			vertexBufferOffset = j->GetVertexOffset();
+			indexBufferOffset = j->GetIndexOffset();
+
 			D3D12_RAYTRACING_GEOMETRY_DESC geomDesc = {};
 			geomDesc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-			geomDesc.Triangles.VertexBuffer.StartAddress = (*j).GetVertexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
+			geomDesc.Triangles.VertexBuffer.StartAddress = vertexBufferAlloc->GetResource()->GetGPUVirtualAddress() + (vertexBufferOffset * sizeof(Vertex));
 			geomDesc.Triangles.VertexBuffer.StrideInBytes = sizeof(Vertex);
 			geomDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 			geomDesc.Triangles.VertexCount = (*j).GetVertexCount();
 
 			if ((*j).GetIndexCount() > 0)
 			{
-				geomDesc.Triangles.IndexBuffer = (*j).GetIndexBufferAlloc()->GetResource()->GetGPUVirtualAddress();
+				geomDesc.Triangles.IndexBuffer = indexBufferAlloc->GetResource()->GetGPUVirtualAddress() + (indexBufferOffset * sizeof(UINT));
 				geomDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 				geomDesc.Triangles.IndexCount = (*j).GetIndexCount();
 			}

@@ -14,6 +14,9 @@ struct InstanceConstant
 
 struct GeometryInfo
 {
+	UINT VertexOffset;
+	UINT IndexOffset;
+
 	UINT AlbedoTextureIndex;
 	UINT MetalicTextureIndex;
 	UINT RoughnessTextureIndex;

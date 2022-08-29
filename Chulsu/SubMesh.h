@@ -18,24 +18,23 @@ public:
 	SubMesh() {}
 	virtual ~SubMesh() {}
 
-	void InitializeBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList,
-		ComPtr<D3D12MA::Allocator> alloc, ResourceStateTracker& tracker, AssetManager& assetMgr, UINT vbStride, UINT ibStride,
-		D3D12_PRIMITIVE_TOPOLOGY topology, const void* vbData, UINT vbCount, const void* ibData, UINT ibCount);
-
 	void SetBLAS(const AccelerationStructureBuffers& BLAS) { mBLAS = BLAS; }
 	AccelerationStructureBuffers GetBLAS() { return mBLAS; }
+
+	void SetVertexCount(UINT vertexCount) { mVerticesCount = vertexCount; }
+	void SetIndexCount(UINT indexCount) { mIndexCount = indexCount; }
 
 	UINT GetVertexCount() { return mVerticesCount; }
 	UINT GetIndexCount() { return mIndexCount; }
 
+	void SetVertexOffset(UINT vertexOffset) { mVertexOffset = vertexOffset; }
+	void SetIndexOffset(UINT indexOffset) { mIndexOffset = indexOffset; }
+
+	UINT GetVertexOffset() { return mVertexOffset; }
+	UINT GetIndexOffset() { return mIndexOffset; }
+
 	void SetMaterialIndex(UINT materialIndex) { mMaterialIndex = materialIndex; }
 	UINT GetMaterialIndex() { return mMaterialIndex; }
-
-	ComPtr<D3D12MA::Allocation> GetVertexBufferAlloc() { return mVertexBufferAlloc; }
-	ComPtr<D3D12MA::Allocation> GetIndexBufferAlloc() { return mIndexBufferAlloc; }
-
-	const D3D12_SHADER_RESOURCE_VIEW_DESC VertexShaderResourceView();
-	const D3D12_SHADER_RESOURCE_VIEW_DESC IndexShaderResourceView();
 
 	string GetName() { return mName; }
 	void SetName(string name) { mName = name; }
@@ -43,22 +42,17 @@ public:
 private:
 	AccelerationStructureBuffers mBLAS;
 
-	ComPtr<D3D12MA::Allocation> mVertexBufferAlloc;
-	ComPtr<D3D12MA::Allocation> mIndexBufferAlloc;
-
-	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {};
-	D3D12_INDEX_BUFFER_VIEW mIndexBufferView = {};
-
 	D3D12_PRIMITIVE_TOPOLOGY mPrimitiveTopology = {};
 
 	BoundingOrientedBox mOOBB = {};
 
-	UINT mSlot = 0;
 	UINT mVerticesCount = 0;
-	UINT mVertexStride = 0;
 	UINT mIndexCount = 0;
 
 	string mName = {};
+
+	UINT mVertexOffset = 0;
+	UINT mIndexOffset = 0;
 
 	UINT mMaterialIndex = UINT_MAX;
 };

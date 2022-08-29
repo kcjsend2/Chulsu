@@ -21,6 +21,9 @@ cbuffer InstanceCB : register(b1)
 
 struct GeometryInfo
 {
+    uint VertexOffset;
+    uint IndexOffset;
+    
     uint AlbedoTextureIndex;
     uint MetalicTextureIndex;
     uint RoughnessTextureIndex;
@@ -69,22 +72,22 @@ Vertex VertexBarycentricLerp(in Vertex v0, in Vertex v1, in Vertex v2, in float3
     return vtx;
 }
 
-Vertex GetHitSurface(in BuiltInTriangleIntersectionAttributes attr, in uint geometryIdx)
+Vertex GetHitSurface(in BuiltInTriangleIntersectionAttributes attr, in uint vertexOffset, in uint indexOffset)
 {
     float3 barycentrics = float3(1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
 
-    StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex + geometryIdx];
-    Buffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex + geometryIdx];
+    StructuredBuffer<Vertex> VertexBuffer = ResourceDescriptorHeap[VertexAttribIndex];
+    Buffer<uint> IndexBuffer = ResourceDescriptorHeap[IndexBufferIndex];
     
     uint primIndex = PrimitiveIndex();
     
-    uint i0 = IndexBuffer[primIndex * 3 + 0];
-    uint i1 = IndexBuffer[primIndex * 3 + 1];
-    uint i2 = IndexBuffer[primIndex * 3 + 2];
+    uint i0 = IndexBuffer[indexOffset + primIndex * 3 + 0];
+    uint i1 = IndexBuffer[indexOffset + primIndex * 3 + 1];
+    uint i2 = IndexBuffer[indexOffset + primIndex * 3 + 2];
     
-    Vertex v0 = VertexBuffer[i0];
-    Vertex v1 = VertexBuffer[i1];
-    Vertex v2 = VertexBuffer[i2];
+    Vertex v0 = VertexBuffer[vertexOffset + i0];
+    Vertex v1 = VertexBuffer[vertexOffset + i1];
+    Vertex v2 = VertexBuffer[vertexOffset + i2];
 
     return VertexBarycentricLerp(v0, v1, v2, barycentrics);
 }
@@ -160,10 +163,11 @@ void Miss(inout RayPayload payload)
 void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     uint geometryIndex = GeometryIndex();
-    Vertex v = GetHitSurface(attribs, geometryIndex);
     
     StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
     GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
+    
+    Vertex v = GetHitSurface(attribs, geoInfo.VertexOffset, geoInfo.IndexOffset);
     
     float hitT = RayTCurrent();
     float3 rayDirW = WorldRayDirection();
@@ -195,10 +199,11 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
 void AnyHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     const uint geometryIndex = GeometryIndex();
-    const Vertex v = GetHitSurface(attribs, geometryIndex);
     
     StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
     const GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
+    
+    const Vertex v = GetHitSurface(attribs, geoInfo.VertexOffset, geoInfo.IndexOffset);
     
     if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
     {
@@ -220,10 +225,11 @@ void ShadowClosestHit(inout ShadowPayload payload, in BuiltInTriangleIntersectio
 void ShadowAnyHit(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     const uint geometryIndex = GeometryIndex();
-    const Vertex v = GetHitSurface(attribs, geometryIndex);
     
     StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
     const GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
+    
+    const Vertex v = GetHitSurface(attribs, geoInfo.VertexOffset, geoInfo.IndexOffset);
     
     if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
     {
