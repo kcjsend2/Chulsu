@@ -223,6 +223,9 @@ void AssetManager::LoadAssimpScene(ID3D12Device5* device, ID3D12GraphicsCommandL
 		subMesh.SetVertexOffset(vertexOffset);
 		subMesh.SetIndexOffset(IndexOffset);
 
+		subMesh.SetVertexCount(pAiMesh->mNumVertices);
+		subMesh.SetIndexCount(pAiMesh->mNumFaces * 3);
+
 		subMeshes.push_back(subMesh);
 
 		vertexOffset = Vertices.size();

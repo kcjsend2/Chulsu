@@ -165,7 +165,7 @@ void DX12Renderer::BuildObjects()
     mCamera.LookAt(XMFLOAT3(0.0f, 100.0f, 0.0f), XMFLOAT3(0.0f, 100.0f, 150.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
 
     mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3(1, 1, 1));
-    //mAssetMgr.LoadTestInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    
     mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
 
     mOutputTexture = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
