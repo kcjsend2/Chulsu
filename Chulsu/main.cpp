@@ -8,6 +8,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int mCmdShow)
 #endif
 	try
 	{
+		ThrowIfFailed(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 		Framework app;
 		app.Init("Chulsu Renderer");
 		app.Run();

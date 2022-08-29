@@ -360,7 +360,18 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 {
 	shared_ptr<Texture> newTexture = make_shared<Texture>();
 
-	/*ComPtr<IDStorageFile> textureFile;
+	/*TexMetadata metaData = {};
+	if (flag == FLAG_WIC)
+	{
+		ThrowIfFailed(GetMetadataFromWICFile(filePath.c_str(), WIC_FLAGS_NONE, metaData));
+	}
+
+	else if (flag == FLAG_DDS)
+	{
+		ThrowIfFailed(GetMetadataFromDDSFile(filePath.c_str(), DDS_FLAGS_NONE, metaData));
+	}
+
+	ComPtr<IDStorageFile> textureFile;
 	mTextureFactory->OpenFile(filePath.c_str(), IID_PPV_ARGS(&textureFile));
 
 	BY_HANDLE_FILE_INFORMATION fileInfo{};
@@ -371,9 +382,9 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 	D3D12MA::ALLOCATION_DESC allocationDesc = {};
 	allocationDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
-	auto resourceDesc = CD3DX12_RESOURCE_DESC(D3D12_RESOURCE_DIMENSION_BUFFER,
-		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, fileSize, 1, 1,
-		1, DXGI_FORMAT_UNKNOWN, 1, 0, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_RESOURCE_FLAG_NONE);
+	auto resourceDesc = CD3DX12_RESOURCE_DESC((D3D12_RESOURCE_DIMENSION)metaData.dimension,
+		D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT, metaData.width, metaData.height, metaData.depth,
+		metaData.mipLevels, metaData.format, 1, 0, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_NONE);
 
 	ThrowIfFailed(alloc->CreateResource(
 		&allocationDesc,
@@ -387,7 +398,7 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 
 	DSTORAGE_REQUEST textureRequest = {};
 	textureRequest.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
-	textureRequest.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
+	textureRequest.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MULTIPLE_SUBRESOURCES;
 	textureRequest.Source.File.Source = textureFile.Get();
 	textureRequest.Source.File.Offset = 0;
 	textureRequest.Source.File.Size = fileSize;
@@ -409,14 +420,14 @@ void AssetManager::LoadTexture(ID3D12Device5* device,
 		WaitForSingleObject(mFenceEvent, INFINITE);
 	}
 
-	newTexture->SetTextureBufferAlloc(textureAlloc);*/
+	newTexture->SetTextureBufferAlloc(textureAlloc);
 
-	/*tracker.TransitionBarrier(cmdList, textureAlloc->GetResource(), D3D12_RESOURCE_STATE_GENERIC_READ);*/
+	tracker.TransitionBarrier(cmdList, textureAlloc->GetResource(), D3D12_RESOURCE_STATE_GENERIC_READ);*/
 
 	if (flag == FLAG_WIC)
-		newTexture->LoadTextureFromWIC(device, cmdList, alloc, tracker,*this, filePath, resourceStates);
+		newTexture->LoadTextureFromWIC(device, cmdList, alloc, tracker, *this, filePath, resourceStates);
 
-	else if(flag == FLAG_DDS)
+	else if (flag == FLAG_DDS)
 		newTexture->LoadTextureFromDDS(device, cmdList, alloc, tracker, *this, filePath, resourceStates);
 
 
