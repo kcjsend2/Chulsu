@@ -1156,3 +1156,30 @@ HRESULT DirectX::LoadWICTextureFromFileEx(
 
     return hr; 
 }
+
+HRESULT DirectX::GetWICTextureSize(const wchar_t* fileName, UINT& width, UINT& height)
+{
+    auto pWIC = GetWIC();
+    if (!pWIC)
+        return E_NOINTERFACE;
+
+
+    // Initialize WIC
+    ComPtr<IWICBitmapDecoder> decoder;
+    HRESULT hr = pWIC->CreateDecoderFromFilename(fileName,
+        nullptr,
+        GENERIC_READ,
+        WICDecodeMetadataCacheOnDemand,
+        decoder.GetAddressOf());
+    if (FAILED(hr))
+        return hr;
+
+    ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame(0, frame.GetAddressOf());
+    if (FAILED(hr))
+        return hr;
+
+    frame->GetSize(&width, &height);
+
+    return S_OK;
+}

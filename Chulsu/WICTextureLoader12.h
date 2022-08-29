@@ -125,6 +125,8 @@ namespace DirectX
         std::unique_ptr<uint8_t[]>& decodedData,
         D3D12_SUBRESOURCE_DATA& subresource);
 
+    HRESULT __cdecl GetWICTextureSize(const wchar_t* fileName, UINT& width, UINT& height);
+
     // Extended version with resource upload
     HRESULT __cdecl CreateWICTextureFromMemoryEx(
         _In_ ID3D12Device* d3dDevice,

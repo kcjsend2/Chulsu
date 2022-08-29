@@ -1921,3 +1921,27 @@ HRESULT DirectX::LoadDDSTextureFromFileEx(
 
     return hr;
 }
+
+
+HRESULT DirectX::GetDDSTextureSize(const wchar_t* fileName, std::unique_ptr<uint8_t[]>& ddsData, UINT& width, UINT& height)
+{
+    const DDS_HEADER* header = nullptr;
+    const uint8_t* bitData = nullptr;
+    size_t bitSize = 0;
+
+    HRESULT hr = LoadTextureDataFromFile(fileName,
+        ddsData,
+        &header,
+        &bitData,
+        &bitSize
+    );
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    width = header->width;
+    height = header->height;
+
+    return S_OK;
+}

@@ -106,4 +106,6 @@ namespace DirectX
         std::vector<D3D12_SUBRESOURCE_DATA>& subresources,
         _Out_opt_ DDS_ALPHA_MODE* alphaMode = nullptr,
         _Out_opt_ bool* isCubeMap = nullptr);
+
+    HRESULT GetDDSTextureSize(const wchar_t* fileName, std::unique_ptr<uint8_t[]>& ddsData, UINT& width, UINT& height);
 }
