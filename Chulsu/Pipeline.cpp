@@ -99,11 +99,11 @@ void Pipeline::CreateShaderTable(ID3D12Device5* device, ID3D12GraphicsCommandLis
 
     const std::vector<std::shared_ptr<Instance>> instances = assetMgr.GetInstances();
     for (uint32_t i = 0; i < instances.size(); i++)
-    {
-        uint8_t* pHitEntry = pData + mShaderTableEntrySize * ((i * 2) + 3); // +3 skips the ray-gen and miss entries, *2 for two Hit Group.
+    {       
+        uint8_t* pHitEntry = pData + mShaderTableEntrySize * ((i * 2) + 3);
         memcpy(pHitEntry, pRtsoProps->GetShaderIdentifier(kHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-        uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;            // The location of the root-descriptor
-        assert(((uint64_t)pCbDesc % 8) == 0); // Root descriptor must be stored at an 8-byte aligned address
+        uint8_t* pCbDesc = pHitEntry + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+        assert(((uint64_t)pCbDesc % 8) == 0);
         *(D3D12_GPU_VIRTUAL_ADDRESS*)pCbDesc = instances[i]->GetInstanceCB()->GetGPUVirtualAddress(0);
 
         memcpy(pHitEntry + mShaderTableEntrySize, pRtsoProps->GetShaderIdentifier(kShadowHitGroup), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
