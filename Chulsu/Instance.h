@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "Mesh.h"
 #include "SubMesh.h"
-#include "ConstantBuffer.h"
+#include "UploadBuffer.h"
 
 struct InstanceConstant
 {

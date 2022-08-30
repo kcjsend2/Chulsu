@@ -34,7 +34,8 @@ enum FLAG_TEXTURE_LOAD
 class AssetManager
 {
 public:
-	AssetManager();
+	AssetManager() = default;
+	~AssetManager() = default;
 
 	void Init(ID3D12Device* device, int numDescriptor);
 

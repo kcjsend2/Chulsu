@@ -3,6 +3,7 @@
 #include "Renderer.h"
 #include "AssetManager.h"
 #include "Camera.h"
+#include "LightManager.h"
 
 class Pipeline;
 
@@ -47,7 +48,7 @@ private:
 	ComPtr<IDXGIFactory4> mDxgiFactory;
 	ComPtr<IDXGISwapChain3> mSwapChain;
 
-	ComPtr<D3D12MA::Allocator> mMemAllocator = NULL;
+	ComPtr<D3D12MA::Allocator> mAllocator = NULL;
 
 	ComPtr<ID3D12Fence> mFence;
 	UINT64 mFenceValue = 0;
@@ -71,14 +72,16 @@ private:
 	FrameObject mFrameObjects[mSwapChainBufferCount];
 
 	AssetManager mAssetMgr;
+	LightManager mLightMgr;
 
 	unordered_map<string, Pipeline> mPipelines;
 
 	ComPtr<D3D12MA::Allocation> mOutputTexture;
 
 	UINT mOutputTextureIndex = UINT_MAX;
+	UINT mLightIndex = UINT_MAX;
 
 	Camera mCamera;
 
-	XMFLOAT3 mShadowDirection = {0, 1, 0};
+	XMFLOAT3 mSunDirection = {0, 1, 0};
 };

@@ -3,13 +3,19 @@
 SamplerState gAnisotropicWrap : register(s0);
 RaytracingAccelerationStructure gRtScene : register(t0);
 
+#define DIRECTIONAL_LIGHT 0
+#define SPOT_LIGHT 1
+#define POINT_LIGHT 2
+
 cbuffer FrameCB : register(b0)
 {
     uint OutputTextureIndex : packoffset(c0.x);
     uint2 ScreenResolution : packoffset(c0.y);
+    uint gLightIndex : packoffset(c0.w);
     matrix gInvViewProj : packoffset(c1);
     float3 gCameraPos : packoffset(c5);
-    float3 gShadowDirection : packoffset(c6);
+    uint gNumLights : packoffset(c5.w);
+    float3 gSunDirection : packoffset(c6);
 }
 
 cbuffer InstanceCB : register(b1)
@@ -38,6 +44,22 @@ struct Vertex
     float2 texCoord;
     float3 tangent;
     float3 biTangent;
+};
+
+struct Light
+{
+    float3 position;
+    int active;
+
+    float3 direction;
+    float range;
+
+    float3 color;
+    uint type;
+
+    float outerCosine;
+    float innerCosine;
+    int castShadows;
 };
 
 float BarycentricLerp(in float v0, in float v1, in float v2, in float3 barycentrics)
@@ -178,20 +200,24 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     RayDesc ray;
     ray.Origin = posW;
-    ray.Direction = gShadowDirection;
+    ray.Direction = gSunDirection;
     ray.TMin = 0.01;
     ray.TMax = 100000;
     
     ShadowPayload shadowPayload;
-    TraceRay(gRtScene, 0, 0xFFFFFFFF, 1, 0, 1, ray, shadowPayload);
+    uint traceRayFlags = RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH;
+    TraceRay(gRtScene, traceRayFlags, 0xFFFFFFFF, 1, 0, 1, ray, shadowPayload);
     
-    float factor = shadowPayload.hit ? 0.1 : 1.0;
+    float factor = shadowPayload.hit ? 0.1f : 1.0f;
     
+    float3 baseColor;
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
         Texture2D<float3> albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
-        payload.color = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz * factor;
+        baseColor = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz;
     }
+    
+    payload.color = baseColor * factor;
     
 }
 
@@ -219,26 +245,6 @@ void AnyHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes a
 void ShadowClosestHit(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
     payload.hit = true;
-}
-
-[shader("anyhit")]
-void ShadowAnyHit(inout ShadowPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
-{
-    const uint geometryIndex = GeometryIndex();
-    
-    StructuredBuffer<GeometryInfo> geoInfoBuffer = ResourceDescriptorHeap[GeometryInfoIndex];
-    const GeometryInfo geoInfo = geoInfoBuffer[geometryIndex];
-    
-    const Vertex v = GetHitSurface(attribs, geoInfo.VertexOffset, geoInfo.IndexOffset);
-    
-    if (geoInfo.OpacityMapTextureIndex != UINT_MAX)
-    {
-        Texture2D opacityMap = ResourceDescriptorHeap[geoInfo.OpacityMapTextureIndex];
-        if (opacityMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x < 0.35f)
-        {
-            IgnoreHit();
-        }
-    }
 }
 
 [shader("miss")]

@@ -65,7 +65,7 @@ ComPtr<ID3D12Device5> DX12Renderer::CreateDevice(ComPtr<IDXGIFactory4> pDxgiFact
             pAdapter->QueryInterface(IID_PPV_ARGS(&allocatorAdapter));
             allocatorDesc.pAdapter = allocatorAdapter;
 
-            ThrowIfFailed(D3D12MA::CreateAllocator(&allocatorDesc, &mMemAllocator));
+            ThrowIfFailed(D3D12MA::CreateAllocator(&allocatorDesc, &mAllocator));
 
             ComPtr<ID3D12Device5> device5;
             pDevice->QueryInterface(IID_PPV_ARGS(&device5));
@@ -157,6 +157,8 @@ void DX12Renderer::Init(HWND winHandle, uint32_t winWidth, uint32_t winHeight)
 
     mAssetMgr.Init(mDevice.Get(), 2048);
     mAssetMgr.mCbvSrvUavDescriptorSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    mLightMgr.Init(mDevice.Get(), mCmdList.Get(), mAllocator.Get(), mResourceTracker, mAssetMgr, 10);
 }
 
 void DX12Renderer::BuildObjects()
@@ -164,11 +166,11 @@ void DX12Renderer::BuildObjects()
     mCamera.SetLens(0.25f * PI, mSwapChainSize.x / mSwapChainSize.y, 1.0f, 20000.0f);
     mCamera.LookAt(XMFLOAT3(0.0f, 100.0f, 0.0f), XMFLOAT3(0.0f, 100.0f, 150.0f), XMFLOAT3(0.0f, 1.0f, 0.0f));
 
-    mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mMemAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3(1, 1, 1));
+    mAssetMgr.CreateInstance(mDevice.Get(), mCmdList.Get(), mAllocator.Get(), mResourceTracker, "Contents/Sponza/Sponza.fbx", XMFLOAT3(), XMFLOAT3(), XMFLOAT3(1, 1, 1));
     
-    mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker);
+    mAssetMgr.BuildAccelerationStructure(mDevice.Get(), mCmdList.Get(), mAllocator, mResourceTracker);
 
-    mOutputTexture = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker,
+    mOutputTexture = mAssetMgr.CreateResource(mDevice.Get(), mCmdList.Get(), mAllocator, mResourceTracker,
         NULL, mSwapChainSize.x, mSwapChainSize.y,
         D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
@@ -180,8 +182,22 @@ void DX12Renderer::BuildObjects()
 
     Pipeline pipeline;
     pipeline.CreatePipelineState(mDevice, L"Shaders/DefaultRayTrace.hlsl");
-    pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mMemAllocator, mResourceTracker, mAssetMgr);
+    pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mAllocator, mResourceTracker, mAssetMgr);
     mPipelines["RayTracing"] = pipeline;
+
+    mLightMgr.AddLight(XMFLOAT3(), XMFLOAT3(0, 1, 0), XMFLOAT3(1, 1, 1), true, 0, LightType::DIRECTIONAL_LIGHT, 0, 0, true);
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+
+    srvDesc.Buffer.FirstElement = 0;
+    srvDesc.Buffer.NumElements = mLightMgr.GetLights().size();
+    srvDesc.Buffer.StructureByteStride = sizeof(Light);
+    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+
+    mLightIndex = mAssetMgr.SetShaderResource(mDevice.Get(), mCmdList.Get(), mLightMgr.GetLightSB()->GetUploadAllocation(), srvDesc);
 }
 
 LRESULT DX12Renderer::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -327,10 +343,10 @@ void DX12Renderer::OnPreciseKeyInput()
 
 
     if (GetAsyncKeyState('Q') & 0x8000)
-        mShadowDirection = Vector3::Transform(mShadowDirection, XMMatrixRotationX(0.001));
+        mSunDirection = Vector3::Transform(mSunDirection, XMMatrixRotationX(0.001f));
 
     if (GetAsyncKeyState('E') & 0x8000)
-        mShadowDirection = Vector3::Transform(mShadowDirection, XMMatrixRotationX(-0.001));
+        mSunDirection = Vector3::Transform(mSunDirection, XMMatrixRotationX(-0.001f));
 }
 
 void DX12Renderer::Update()
@@ -380,12 +396,14 @@ void DX12Renderer::Draw()
     mCmdList->SetComputeRootSignature(mPipelines["RayTracing"].GetGlobalRootSignature().Get());
 
     mCmdList->SetComputeRoot32BitConstant(0, mOutputTextureIndex, 0);
+    mCmdList->SetComputeRoot32BitConstants(0, 2, &mSwapChainSize, 1);
+    mCmdList->SetComputeRoot32BitConstant(0, mLightIndex, 3);
 
     auto mat = Matrix4x4::Transpose(Matrix4x4::Inverse(Matrix4x4::Multiply(mCamera.GetView(), mCamera.GetProj())));
     mCmdList->SetComputeRoot32BitConstants(0, 16, &mat, 4);
-
     mCmdList->SetComputeRoot32BitConstants(0, 3, &mCamera.GetPosition(), 20);
-    mCmdList->SetComputeRoot32BitConstants(0, 3, &mShadowDirection, 24);
+    mCmdList->SetComputeRoot32BitConstant(0, mLightMgr.GetLights().size(), 23);
+    mCmdList->SetComputeRoot32BitConstants(0, 3, &mSunDirection, 24);
 
     mCmdList->SetComputeRootShaderResourceView(1, mAssetMgr.GetTLAS().mResult->GetResource()->GetGPUVirtualAddress());
 

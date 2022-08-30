@@ -78,6 +78,9 @@
     <ClCompile Include="WICTextureLoader12.cpp">
       <Filter>소스 파일\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="LightManager.cpp">
+      <Filter>소스 파일\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Framework.h">
@@ -92,7 +95,7 @@
     <ClInclude Include="Camera.h">
       <Filter>헤더 파일\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="ConstantBuffer.h">
+    <ClInclude Include="UploadBuffer.h">
       <Filter>헤더 파일\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="D3D12MemAlloc.h">
@@ -135,6 +138,9 @@
       <Filter>헤더 파일\Core</Filter>
     </ClInclude>
     <ClInclude Include="WICTextureLoader12.h">
+      <Filter>헤더 파일\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="LightManager.h">
       <Filter>헤더 파일\Graphics</Filter>
     </ClInclude>
   </ItemGroup>

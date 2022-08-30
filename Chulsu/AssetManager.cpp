@@ -4,10 +4,6 @@
 #include "Instance.h"
 #include "Mesh.h"
 
-AssetManager::AssetManager()
-{
-}
-
 void AssetManager::Init(ID3D12Device* device, int numDescriptor)
 {
 	ThrowIfFailed(DStorageGetFactory(IID_PPV_ARGS(&mTextureFactory)));

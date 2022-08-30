@@ -7,19 +7,19 @@ using namespace SubObject;
 
 void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* filename)
 {
-    std::array<D3D12_STATE_SUBOBJECT, 13> subobjects;
+    std::array<D3D12_STATE_SUBOBJECT, 11> subobjects;
     uint32_t index = 0;
 
     // Create the DXIL library
 
-    const WCHAR* entryPoints[] = { kAnyHitShader, kShadowAnyHitShader, kRayGenShader, kMissShader, kClosestHitShader, kShadowClosestHitShader, kShadowMissShader };
+    const WCHAR* entryPoints[] = { kAnyHitShader, kRayGenShader, kMissShader, kClosestHitShader, kShadowClosestHitShader, kShadowMissShader };
     DxilLibrary dxilLib = CreateDxilLibrary(filename, entryPoints, arraysize(entryPoints));
     subobjects[index++] = dxilLib.stateSubobject; // 0 Library
 
     HitProgram hitProgram(kAnyHitShader, kClosestHitShader, kHitGroup);
     subobjects[index++] = hitProgram.subObject; // 1 Hit Group
 
-    HitProgram shadowHitProgram(kShadowAnyHitShader, kShadowClosestHitShader, kShadowHitGroup);
+    HitProgram shadowHitProgram(kAnyHitShader, kShadowClosestHitShader, kShadowHitGroup);
     subobjects[index++] = shadowHitProgram.subObject; // 2 Hit Group
 
     // Create the miss root-signature and association
@@ -42,21 +42,12 @@ void Pipeline::CreatePipelineState(ComPtr<ID3D12Device5> device, const WCHAR* fi
     ExportAssociation hitRootAssociation(hitRootSigExports, 2, &(subobjects[hitRootIndex]));
     subobjects[index++] = hitRootAssociation.subobject; // 7 Associate Hit Root Sig to Hit Group
 
-    // Create the hit root-signature and association
-    LocalRootSignature shadowHitRootSignature(device, CreateHitRootDesc().desc);
-    subobjects[index] = shadowHitRootSignature.subobject; // 5 Hit Root Sig
-
-    uint32_t shadowHitRootIndex = index++; // 6
-    const WCHAR* shadowHitRootSigExports[] = { kShadowAnyHitShader, kShadowClosestHitShader };
-    ExportAssociation shadowHitRootAssociation(shadowHitRootSigExports, 2, &(subobjects[shadowHitRootIndex]));
-    subobjects[index++] = shadowHitRootAssociation.subobject; // 7 Associate Hit Root Sig to Hit Group
-
     // Bind the payload size to the programs
     ShaderConfig shaderConfig(sizeof(float) * 2, sizeof(float) * 3);
     subobjects[index] = shaderConfig.subobject; // 7 Shader Config
 
     uint32_t shaderConfigIndex = index++; // 8
-    const WCHAR* shaderExports[] = { kAnyHitShader, kShadowAnyHitShader, kMissShader, kClosestHitShader, kRayGenShader, kShadowMissShader, kShadowClosestHitShader };
+    const WCHAR* shaderExports[] = { kAnyHitShader, kMissShader, kClosestHitShader, kRayGenShader, kShadowMissShader, kShadowClosestHitShader };
     ExportAssociation configAssociation(shaderExports, arraysize(shaderExports), &(subobjects[shaderConfigIndex]));
     subobjects[index++] = configAssociation.subobject;
 
