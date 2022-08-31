@@ -185,7 +185,7 @@ void DX12Renderer::BuildObjects()
     pipeline.CreateShaderTable(mDevice.Get(), mCmdList.Get(), mAllocator, mResourceTracker, mAssetMgr);
     mPipelines["RayTracing"] = pipeline;
 
-    mLightMgr.AddLight(XMFLOAT3(), XMFLOAT3(0, 1, 0), XMFLOAT3(1, 1, 1), true, 0, LightType::DIRECTIONAL_LIGHT, 0, 0, true);
+    mLightMgr.AddLight(XMFLOAT3(), XMFLOAT3(0, -1, 0), XMFLOAT3(1, 1, 1), true, 0, LightType::DIRECTIONAL_LIGHT, 0, 0, true);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -198,6 +198,7 @@ void DX12Renderer::BuildObjects()
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
     mLightIndex = mAssetMgr.SetShaderResource(mDevice.Get(), mCmdList.Get(), mLightMgr.GetLightSB()->GetUploadAllocation(), srvDesc);
+    mAssetMgr.AddCurrentHeapIndex();
 }
 
 LRESULT DX12Renderer::OnProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -353,6 +354,7 @@ void DX12Renderer::Update()
 {
     OnPreciseKeyInput();
     mCamera.Update(mDeltaTime);
+    mLightMgr.Update();
 }
 
 void DX12Renderer::Draw()

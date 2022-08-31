@@ -1,11 +1,107 @@
+#define PI 3.1415926535f
 #define UINT_MAX 0xffffffff
-
-SamplerState gAnisotropicWrap : register(s0);
-RaytracingAccelerationStructure gRtScene : register(t0);
 
 #define DIRECTIONAL_LIGHT 0
 #define SPOT_LIGHT 1
 #define POINT_LIGHT 2
+
+struct Light
+{
+    float3 position;
+    int active;
+
+    float3 direction;
+    float range;
+
+    float3 color;
+    uint type;
+
+    float outerCosine;
+    float innerCosine;
+    int castShadows;
+};
+
+float SchlickFresnel(float3 F0, float3 H, float3 L)
+{
+    return F0 + (1.0f - F0) * pow(1.0f - saturate(dot(H, L)), 5);
+}
+
+float DistributionGGX(float3 N, float3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float nom = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / max(denom, 0.0000001); // prevent divide by zero for roughness=0.0 and NdotH=1.0
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float nom = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+
+float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+
+float3 DirectionalLightPBR(Light light, float3 N, float3 V, float3 albedo, float metallic, float roughness)
+{
+    float3 F0 = float3(0.04, 0.04, 0.04);
+    F0 = lerp(F0, albedo, metallic);
+    
+     // calculate per-light radiance
+    float3 L = normalize(-light.direction.xyz);
+    float3 H = normalize(V + L);
+    
+    float3 radiance = light.color.xyz;
+    
+    // Cook-Torrance BRDF
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);
+    float3 F = SchlickFresnel(F0, L, H);
+           
+    float3 nominator = NDF * G * F;
+    float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+    float3 specular = nominator / max(denominator, 0.001); // prevent divide by zero for NdotV=0.0 or NdotL=0.0
+        
+        // kS is equal to Fresnel
+    float3 kS = F;
+        // for energy conservation, the diffuse and specular light can't
+        // be above 1.0 (unless the surface emits light); to preserve this
+        // relationship the diffuse component (kD) should equal 1.0 - kS.
+    float3 kD = float3(1.0, 1.0, 1.0) - kS;
+        // multiply kD by the inverse metalness such that only non-metals 
+        // have diffuse lighting, or a linear blend if partly metal (pure metals
+        // have no diffuse light).
+    kD *= 1.0 - metallic;
+
+        // scale light by NdotL
+    float NdotL = max(dot(N, L), 0.0);
+
+        // add to outgoing radiance Lo
+    float3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+    
+    return Lo;
+}
+SamplerState gAnisotropicWrap : register(s0);
+RaytracingAccelerationStructure gRtScene : register(t0);
 
 cbuffer FrameCB : register(b0)
 {
@@ -46,21 +142,16 @@ struct Vertex
     float3 biTangent;
 };
 
-struct Light
+// Tempolar method, apply normal mapping later.
+float3 UnpackNormalMap(Vertex v)
 {
-    float3 position;
-    int active;
-
-    float3 direction;
-    float range;
-
-    float3 color;
-    uint type;
-
-    float outerCosine;
-    float innerCosine;
-    int castShadows;
-};
+    float3 normal = v.normal;
+    float3 tangeent = v.tangent;
+    float3 biTangent = v.biTangent;
+    
+    return normal;
+    
+}
 
 float BarycentricLerp(in float v0, in float v1, in float v2, in float3 barycentrics)
 {
@@ -210,15 +301,35 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     float factor = shadowPayload.hit ? 0.1f : 1.0f;
     
-    float3 baseColor;
+    float3 albedo;
     if (geoInfo.AlbedoTextureIndex != UINT_MAX)
     {
         Texture2D<float3> albedoMap = ResourceDescriptorHeap[geoInfo.AlbedoTextureIndex];
-        baseColor = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz;
+        albedo = albedoMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).xyz;
     }
     
-    payload.color = baseColor * factor;
+    float metalic;
+    if (geoInfo.MetalicTextureIndex != UINT_MAX)
+    {
+        Texture2D<float> metalicMap = ResourceDescriptorHeap[geoInfo.MetalicTextureIndex];
+        metalic = metalicMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x;
+    }
     
+    float roughness;
+    if (geoInfo.RoughnessTextureIndex != UINT_MAX)
+    {
+        Texture2D<float> roughnessMap = ResourceDescriptorHeap[geoInfo.RoughnessTextureIndex];
+        roughness = roughnessMap.SampleLevel(gAnisotropicWrap, v.texCoord, 0.0f).x;
+    }
+    
+    float3 color = albedo;
+    
+    if(gNumLights > 0)
+    {
+        StructuredBuffer<Light> light = ResourceDescriptorHeap[gLightIndex];
+        color = DirectionalLightPBR(light[0], UnpackNormalMap(v), normalize(0.0f.xxx - WorldRayOrigin()), albedo, metalic, roughness);
+    }
+    payload.color = color * factor;
 }
 
 [shader("anyhit")]
