@@ -21,6 +21,30 @@ struct Light
     int castShadows;
 };
 
+struct GeometryInfo
+{
+    uint VertexOffset;
+    uint IndexOffset;
+    
+    uint AlbedoTextureIndex;
+    uint MetalicTextureIndex;
+    uint RoughnessTextureIndex;
+    uint NormalMapTextureIndex;
+    uint OpacityMapTextureIndex;
+};
+
+struct Vertex
+{
+    float3 position;
+    float3 normal;
+    float2 texCoord;
+    float3 tangent;
+    float3 biTangent;
+};
+
+SamplerState gAnisotropicWrap : register(s0);
+RaytracingAccelerationStructure gRtScene : register(t0);
+
 float SchlickFresnel(float3 F0, float3 H, float3 L)
 {
     return F0 + (1.0f - F0) * pow(1.0f - saturate(dot(H, L)), 5);
@@ -100,8 +124,6 @@ float3 DirectionalLightPBR(Light light, float3 N, float3 V, float3 albedo, float
     
     return Lo;
 }
-SamplerState gAnisotropicWrap : register(s0);
-RaytracingAccelerationStructure gRtScene : register(t0);
 
 cbuffer FrameCB : register(b0)
 {
@@ -120,28 +142,6 @@ cbuffer InstanceCB : register(b1)
     uint VertexAttribIndex : packoffset(c0.y);
     uint IndexBufferIndex : packoffset(c0.z);
 }
-
-struct GeometryInfo
-{
-    uint VertexOffset;
-    uint IndexOffset;
-    
-    uint AlbedoTextureIndex;
-    uint MetalicTextureIndex;
-    uint RoughnessTextureIndex;
-    uint NormalMapTextureIndex;
-    uint OpacityMapTextureIndex;
-};
-
-struct Vertex
-{
-    float3 position;
-    float3 normal;
-    float2 texCoord;
-    float3 tangent;
-    float3 biTangent;
-};
-
 // Tempolar method, apply normal mapping later.
 float3 UnpackNormalMap(Vertex v)
 {
@@ -324,11 +324,11 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     
     float3 color = albedo;
     
-    if(gNumLights > 0)
-    {
-        StructuredBuffer<Light> light = ResourceDescriptorHeap[gLightIndex];
-        color = DirectionalLightPBR(light[0], UnpackNormalMap(v), normalize(0.0f.xxx - WorldRayOrigin()), albedo, metalic, roughness);
-    }
+    //if(gNumLights > 0)
+    //{
+    //    StructuredBuffer<Light> light = ResourceDescriptorHeap[gLightIndex];
+    //    color = DirectionalLightPBR(light[0], UnpackNormalMap(v), normalize(0.0f.xxx - WorldRayOrigin()), albedo, metalic, roughness);
+    //}
     payload.color = color * factor;
 }
 
