@@ -456,3 +456,5 @@ FodyWeavers.xsd
 *.sln.iml
 
 *.png
+
+vcpkg_installed/

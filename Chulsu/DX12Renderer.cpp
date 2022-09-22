@@ -51,7 +51,7 @@ ComPtr<ID3D12Device5> DX12Renderer::CreateDevice(ComPtr<IDXGIFactory4> pDxgiFact
 #endif
         // Create the device
         ComPtr<ID3D12Device> pDevice;
-        D3D12CreateDevice(pAdapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&pDevice));
+        ThrowIfFailed(D3D12CreateDevice(pAdapter.Get(), D3D_FEATURE_LEVEL_12_2, IID_PPV_ARGS(&pDevice)));
 
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 features5;
         HRESULT hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
